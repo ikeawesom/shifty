@@ -3,7 +3,7 @@
 We are building **Shifty**, a shift and task delegation management SaaS platform.
 
 ## Current status
-**Phase 3 (Auth + Onboarding) is complete. Starting Phase 4: Billing (Stripe).**
+**Phase 4 (Billing) is complete. Starting Phase 5: Members + Invite Flow.**
 
 ## What was built so far
 - Next.js 16 App Router + TypeScript + Tailwind CSS + shadcn/ui scaffolded and building cleanly
@@ -23,6 +23,12 @@ We are building **Shifty**, a shift and task delegation management SaaS platform
 - `src/app/(app)/dashboard/page.tsx` — protected dashboard with user sync + org redirect
 - `src/app/(app)/org/new/page.tsx` — onboarding: create first org (server action)
 - `src/app/page.tsx` — marketing home with sign in / register links
+- `src/lib/stripe.ts` — Stripe singleton + plan↔price maps
+- `src/app/api/webhooks/stripe/route.ts` — webhook: syncs subscription/cancellation to DB
+- `src/app/api/billing/checkout/route.ts` — creates Stripe Hosted Checkout Session
+- `src/app/api/billing/portal/route.ts` — creates Stripe Customer Portal session
+- `src/components/billing/PricingCards.tsx` — client pricing UI (Starter / Pro / Enterprise)
+- `src/app/(app)/settings/billing/page.tsx` — billing settings page
 
 ## Tech stack
 - Next.js 16 App Router + TypeScript
@@ -46,19 +52,20 @@ We are building **Shifty**, a shift and task delegation management SaaS platform
 | Pro | 8 | 50 | 10 | Yes |
 | Enterprise | ∞ | ∞ | ∞ | Yes |
 
-## Phase 4 — What to do
-1. Create a Stripe account, get test API keys
-2. Create products/prices in Stripe dashboard (Starter, Pro, Enterprise tiers)
-3. Add to `.env.local`:
-   ```
-   STRIPE_SECRET_KEY="sk_test_..."
-   STRIPE_WEBHOOK_SECRET="whsec_..."
-   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_..."
-   STRIPE_PRICE_STARTER="price_..."
-   STRIPE_PRICE_PRO="price_..."
-   STRIPE_PRICE_ENTERPRISE="price_..."
-   ```
-4. Tell Claude "Phase 4 ready"
+## Phase 5 — What to do
+
+### Prerequisites
+- Gmail SMTP credentials for sending invite emails (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`)
+- Add to `.env.local`:
+  ```
+  SMTP_HOST="smtp.gmail.com"
+  SMTP_PORT="587"
+  SMTP_USER="your@gmail.com"
+  SMTP_PASS="your-app-password"
+  ```
+
+### Tell Claude
+Once env vars are set: tell Claude **"Phase 5 ready"**
 
 ## Working agreement
 - Build **phase by phase** — confirm each phase works before starting the next

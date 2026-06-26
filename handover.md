@@ -1,47 +1,60 @@
 # Shifty — Handover
 
-## Last completed: Phase 3 — Auth + Onboarding (Kinde)
+## Last completed: Phase 4 — Billing (Stripe)
 
 ### What was done
-- Installed `@kinde-oss/kinde-auth-nextjs@2.13.0`
-- Created `src/app/api/auth/[kindeAuth]/route.ts` — Kinde catch-all route handler (`GET = handleAuth()`)
-- Created `src/lib/auth.ts` — `getUser()`, `requireUser()`, `syncUser()` server helpers
-  - `syncUser()` upserts a DB `User` row from the Kinde session on every protected page load
-- Created `src/proxy.ts` — route proxy protecting `/dashboard`, `/org`, `/members`, `/shifts`, `/settings`
-  - Note: Next.js 16 renamed `middleware.ts` → `proxy.ts`, export named `proxy` (not default)
-- Created `src/app/(app)/dashboard/page.tsx` — syncs user, redirects to `/org/new` if no org membership
-- Created `src/app/(app)/org/new/page.tsx` + `OrgCreateForm.tsx` — server action creates Org + OrgMember (ADMIN)
-- Replaced boilerplate `src/app/page.tsx` with Sign in / Create account links; redirects to `/dashboard` if logged in
-- Updated `src/app/layout.tsx` — metadata + Sonner `<Toaster />`
-- Build passes cleanly (no warnings)
+- Created `src/lib/stripe.ts` — singleton Stripe client + `PLAN_TO_PRICE` / `PRICE_TO_PLAN` maps
+- Created `src/app/api/webhooks/stripe/route.ts`:
+  - Verifies Stripe signature via `stripe.webhooks.constructEvent`
+  - `checkout.session.completed` → updates `stripeCustomerId`, `stripeSubscriptionId`, `plan` on User
+  - `customer.subscription.updated` → syncs plan change from price ID
+  - `customer.subscription.deleted` → resets to `FREE`, clears `stripeSubscriptionId`
+- Created `src/app/api/billing/checkout/route.ts` — creates Stripe Hosted Checkout Session (subscription mode)
+- Created `src/app/api/billing/portal/route.ts` — creates Stripe Customer Portal session
+- Created `src/components/billing/PricingCards.tsx` — client component: 3 tier cards, upgrade/portal buttons
+- Created `src/app/(app)/settings/billing/page.tsx` — shows current plan + PricingCards
+- Build passes cleanly
 
-### Auth flow
-1. User visits `/` → not authed → sees sign in / register links
-2. User clicks "Create account" → `/api/auth/register` → Kinde hosted UI
-3. Kinde redirects to `/dashboard` on success
-4. `syncUser()` upserts User row (sets `platformRole = ORG_LEADER` on create)
-5. No org membership → redirected to `/org/new`
-6. User fills org name → server action creates Org + OrgMember (ADMIN) → back to `/dashboard`
-7. Returning visits: middleware (`proxy.ts`) checks Kinde cookies; unauthenticated requests go to `/api/auth/login`
+### Billing flow
+1. User visits `/settings/billing` → sees current plan badge + 3 pricing cards (Starter / Pro / Enterprise)
+2. Clicks "Upgrade" → POST `/api/billing/checkout` → Stripe Hosted Checkout redirect
+3. Pays → Stripe fires `checkout.session.completed` → webhook updates User plan in DB
+4. User redirected back to `/settings/billing?success=1`
+5. Existing subscribers click "Manage Billing" → POST `/api/billing/portal` → Stripe portal (cancel/downgrade)
+6. Cancel → Stripe fires `customer.subscription.deleted` → plan resets to FREE
+
+### Testing
+```
+# terminal 1
+npm run dev
+
+# terminal 2
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+
+# test card: 4242 4242 4242 4242, any future expiry, any CVC
+```
 
 ### Key files
-- `src/proxy.ts` — route protection (replaces middleware)
-- `src/lib/auth.ts` — server auth helpers; import `syncUser` on every protected Server Component
-- `src/app/api/auth/[kindeAuth]/route.ts` — Kinde handler
-- `src/app/(app)/dashboard/page.tsx` — entry point after login
-- `src/app/(app)/org/new/page.tsx` — onboarding: create first org
-
-### Next.js 16 gotcha
-`middleware.ts` is deprecated — renamed to `proxy.ts`. The exported function must be named `proxy`, not `default`. The `config.matcher` export still works the same.
+- `src/lib/stripe.ts` — Stripe singleton + plan↔price maps
+- `src/app/api/webhooks/stripe/route.ts` — subscription sync
+- `src/app/api/billing/checkout/route.ts` — checkout
+- `src/app/api/billing/portal/route.ts` — portal
+- `src/components/billing/PricingCards.tsx` — billing UI
+- `src/app/(app)/settings/billing/page.tsx` — billing page
 
 ---
 
 ## Previous phases
 
+### Phase 3 — Auth + Onboarding (Kinde)
+- `src/lib/auth.ts` — `getUser()`, `requireUser()`, `syncUser()` helpers
+- `src/proxy.ts` — route protection (Next.js 16: `proxy.ts` not `middleware.ts`)
+- `src/app/(app)/dashboard/page.tsx` — protected dashboard, redirects to `/org/new` if no org
+- `src/app/(app)/org/new/page.tsx` — create first org (server action)
+
 ### Phase 2 — Database (Supabase + Prisma)
 - Prisma 7 + Supabase PostgreSQL
 - `prisma/schema.prisma` — 7 models, 4 enums
-- `prisma.config.ts` — Prisma 7 connection config (no `url` in schema)
 - `src/lib/prisma.ts` — singleton PrismaClient with `PrismaPg` adapter
 - Migration `20260626141645_init` applied
 
@@ -51,18 +64,11 @@
 
 ---
 
-## Next: Phase 4 — Billing (Stripe)
+## Next: Phase 5 — Members + Invite Flow
 
-### What to do
-1. Create a Stripe account, get test API keys
-2. Create products/prices in Stripe dashboard (Starter, Pro, Enterprise)
-3. Add to `.env.local`:
-   ```
-   STRIPE_SECRET_KEY="sk_test_..."
-   STRIPE_WEBHOOK_SECRET="whsec_..."
-   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_..."
-   STRIPE_PRICE_STARTER="price_..."
-   STRIPE_PRICE_PRO="price_..."
-   STRIPE_PRICE_ENTERPRISE="price_..."
-   ```
-4. Tell Claude "Phase 4 ready"
+### What to build
+- Invite member by email: generate signed token, store `Invitation` row, send email
+- Accept invite route: validate token → create `OrgMember` (role: MEMBER)
+- Member dashboard: same `/dashboard` but no billing link
+- Enforce tier member limits on invite send (check against `Plan` limits)
+- Email via Nodemailer + Gmail SMTP (env vars: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`)
