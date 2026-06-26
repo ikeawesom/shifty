@@ -55,7 +55,7 @@ We are building **Shifty**, a shift and task delegation management SaaS platform
 ## Phase 5 — What to do
 
 ### Prerequisites
-- Gmail SMTP credentials for sending invite emails (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`)
+- Gmail SMTP credentials for sending invite emails
 - Add to `.env.local`:
   ```
   SMTP_HOST="smtp.gmail.com"
@@ -63,9 +63,15 @@ We are building **Shifty**, a shift and task delegation management SaaS platform
   SMTP_USER="your@gmail.com"
   SMTP_PASS="your-app-password"
   ```
+- Tell Claude **"Phase 5 ready"** once env vars are set
 
-### Tell Claude
-Once env vars are set: tell Claude **"Phase 5 ready"**
+### What Claude will build
+- `src/lib/email.ts` — Nodemailer transporter singleton
+- `src/app/api/invitations/route.ts` — POST: create Invitation row, send invite email with signed token
+- `src/app/api/invitations/[token]/route.ts` — GET: validate token → create OrgMember (MEMBER) → redirect to dashboard
+- `src/app/(app)/members/page.tsx` — member list + invite form for org ADMINs
+- Tier limit enforcement: check member count against `Plan` limits before sending invite
+- Member vs leader dashboard distinction: members see no billing link
 
 ## Working agreement
 - Build **phase by phase** — confirm each phase works before starting the next
