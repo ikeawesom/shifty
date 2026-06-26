@@ -1,51 +1,68 @@
 # Shifty — Handover
 
-## Last completed: Phase 2 — Database (Supabase + Prisma)
+## Last completed: Phase 3 — Auth + Onboarding (Kinde)
 
 ### What was done
-- Installed Prisma 7 (`prisma`, `@prisma/client`, `@prisma/adapter-pg`, `pg`, `@types/pg`)
-- Wrote `prisma/schema.prisma` — 7 models, 4 enums (no `url` in schema — Prisma 7 breaking change)
-- Created `prisma.config.ts` — loads `.env.local` via dotenv, provides `DIRECT_URL` for migrations
-- Ran `prisma migrate dev --name init` — migration `20260626141645_init` applied to Supabase
-- Ran `prisma generate` — client types generated
-- Created `src/lib/prisma.ts` — global PrismaClient singleton using `PrismaPg` adapter + `DATABASE_URL`
-- Created `prisma/seed.ts` — seeds leader user, org, and member user
-- Build passes cleanly
+- Installed `@kinde-oss/kinde-auth-nextjs@2.13.0`
+- Created `src/app/api/auth/[kindeAuth]/route.ts` — Kinde catch-all route handler (`GET = handleAuth()`)
+- Created `src/lib/auth.ts` — `getUser()`, `requireUser()`, `syncUser()` server helpers
+  - `syncUser()` upserts a DB `User` row from the Kinde session on every protected page load
+- Created `src/proxy.ts` — route proxy protecting `/dashboard`, `/org`, `/members`, `/shifts`, `/settings`
+  - Note: Next.js 16 renamed `middleware.ts` → `proxy.ts`, export named `proxy` (not default)
+- Created `src/app/(app)/dashboard/page.tsx` — syncs user, redirects to `/org/new` if no org membership
+- Created `src/app/(app)/org/new/page.tsx` + `OrgCreateForm.tsx` — server action creates Org + OrgMember (ADMIN)
+- Replaced boilerplate `src/app/page.tsx` with Sign in / Create account links; redirects to `/dashboard` if logged in
+- Updated `src/app/layout.tsx` — metadata + Sonner `<Toaster />`
+- Build passes cleanly (no warnings)
+
+### Auth flow
+1. User visits `/` → not authed → sees sign in / register links
+2. User clicks "Create account" → `/api/auth/register` → Kinde hosted UI
+3. Kinde redirects to `/dashboard` on success
+4. `syncUser()` upserts User row (sets `platformRole = ORG_LEADER` on create)
+5. No org membership → redirected to `/org/new`
+6. User fills org name → server action creates Org + OrgMember (ADMIN) → back to `/dashboard`
+7. Returning visits: middleware (`proxy.ts`) checks Kinde cookies; unauthenticated requests go to `/api/auth/login`
 
 ### Key files
-- `prisma/schema.prisma` — full data model
-- `prisma.config.ts` — Prisma 7 config (replaces `url`/`directUrl` in schema)
-- `prisma/migrations/20260626141645_init/migration.sql` — initial DDL
-- `src/lib/prisma.ts` — import this everywhere you need DB access
-- `prisma/seed.ts` — run with `npx tsx prisma/seed.ts`
+- `src/proxy.ts` — route protection (replaces middleware)
+- `src/lib/auth.ts` — server auth helpers; import `syncUser` on every protected Server Component
+- `src/app/api/auth/[kindeAuth]/route.ts` — Kinde handler
+- `src/app/(app)/dashboard/page.tsx` — entry point after login
+- `src/app/(app)/org/new/page.tsx` — onboarding: create first org
 
-### Prisma 7 gotcha
-Prisma 7 removed `url`/`directUrl` from `schema.prisma`. Connection config now lives in `prisma.config.ts`. The client requires an explicit adapter (`PrismaPg`) passed to `new PrismaClient({ adapter })`.
+### Next.js 16 gotcha
+`middleware.ts` is deprecated — renamed to `proxy.ts`. The exported function must be named `proxy`, not `default`. The `config.matcher` export still works the same.
 
 ---
 
-## Next: Phase 3 — Auth + Onboarding (Kinde)
+## Previous phases
 
-### What the user needs to do first
-1. Create a Kinde account at https://kinde.com
-2. Create an application (type: Back-end web, framework: Next.js)
-3. Set allowed callback URLs: `http://localhost:3000/api/auth/kinde_callback`
-4. Set allowed logout URLs: `http://localhost:3000`
-5. Add to `.env.local`:
-   ```
-   KINDE_CLIENT_ID="..."
-   KINDE_CLIENT_SECRET="..."
-   KINDE_ISSUER_URL="https://yourapp.kinde.com"
-   KINDE_SITE_URL="http://localhost:3000"
-   KINDE_POST_LOGOUT_REDIRECT_URL="http://localhost:3000"
-   KINDE_POST_LOGIN_REDIRECT_URL="http://localhost:3000/dashboard"
-   ```
-6. Tell Claude "Phase 3 ready"
+### Phase 2 — Database (Supabase + Prisma)
+- Prisma 7 + Supabase PostgreSQL
+- `prisma/schema.prisma` — 7 models, 4 enums
+- `prisma.config.ts` — Prisma 7 connection config (no `url` in schema)
+- `src/lib/prisma.ts` — singleton PrismaClient with `PrismaPg` adapter
+- Migration `20260626141645_init` applied
 
-### What Claude will do in Phase 3
-- Install `@kinde-oss/kinde-auth-nextjs`
-- Create `src/app/api/auth/[kindeAuth]/route.ts` — Kinde catch-all route
-- Create `src/lib/auth.ts` — `getUser()` / `requireUser()` server helpers
-- Create `src/middleware.ts` — protect `(app)` routes
-- Create onboarding page: first-login Org Leaders prompted to create their org (writes to DB)
-- Sync Kinde user → `User` row on first login
+### Phase 1 — Scaffold + Tooling
+- Next.js 16 App Router + TypeScript + Tailwind CSS + shadcn/ui
+- Full folder structure, `src/types/index.ts`, `vercel.json`
+
+---
+
+## Next: Phase 4 — Billing (Stripe)
+
+### What to do
+1. Create a Stripe account, get test API keys
+2. Create products/prices in Stripe dashboard (Starter, Pro, Enterprise)
+3. Add to `.env.local`:
+   ```
+   STRIPE_SECRET_KEY="sk_test_..."
+   STRIPE_WEBHOOK_SECRET="whsec_..."
+   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_..."
+   STRIPE_PRICE_STARTER="price_..."
+   STRIPE_PRICE_PRO="price_..."
+   STRIPE_PRICE_ENTERPRISE="price_..."
+   ```
+4. Tell Claude "Phase 4 ready"

@@ -3,12 +3,12 @@
 We are building **Shifty**, a shift and task delegation management SaaS platform.
 
 ## Current status
-**Phase 2 (Database) is complete. Starting Phase 3: Auth + Onboarding (Kinde).**
+**Phase 3 (Auth + Onboarding) is complete. Starting Phase 4: Billing (Stripe).**
 
 ## What was built so far
-- Next.js 14 App Router + TypeScript + Tailwind CSS + shadcn/ui scaffolded and building cleanly
+- Next.js 16 App Router + TypeScript + Tailwind CSS + shadcn/ui scaffolded and building cleanly
 - Full folder structure created per the plan
-- `src/types/index.ts` stub with shared enums
+- `src/types/index.ts` stub with shared types
 - `vercel.json` with Vercel Cron config
 - Prisma 7 + Supabase PostgreSQL connected
 - `prisma/schema.prisma` — 7 models: User, Organization, OrgMember, Shift, ShiftAssignee, ShiftCompletion, Invitation
@@ -16,12 +16,19 @@ We are building **Shifty**, a shift and task delegation management SaaS platform
 - `prisma/migrations/20260626141645_init/` — initial migration applied to Supabase
 - `src/lib/prisma.ts` — singleton PrismaClient using `@prisma/adapter-pg`
 - `prisma/seed.ts` — seed script (leader + member + org)
+- `@kinde-oss/kinde-auth-nextjs` installed and configured
+- `src/app/api/auth/[kindeAuth]/route.ts` — Kinde catch-all route handler
+- `src/lib/auth.ts` — `getUser()`, `requireUser()`, `syncUser()` server helpers
+- `src/proxy.ts` — route proxy protecting app routes (Next.js 16: middleware → proxy)
+- `src/app/(app)/dashboard/page.tsx` — protected dashboard with user sync + org redirect
+- `src/app/(app)/org/new/page.tsx` — onboarding: create first org (server action)
+- `src/app/page.tsx` — marketing home with sign in / register links
 
 ## Tech stack
-- Next.js 14 App Router + TypeScript
+- Next.js 16 App Router + TypeScript
 - Tailwind CSS + shadcn/ui
 - Prisma 7 + Supabase (PostgreSQL) — **Note: Prisma 7 uses `prisma.config.ts`, not `url` in schema**
-- Kinde (auth)
+- Kinde (auth) — **Note: Next.js 16 uses `proxy.ts` not `middleware.ts`**
 - Stripe (billing)
 - Gmail SMTP / Nodemailer (email — invites + reminders)
 - Vercel Cron (daily reminders at 07:00 UTC)
@@ -39,13 +46,19 @@ We are building **Shifty**, a shift and task delegation management SaaS platform
 | Pro | 8 | 50 | 10 | Yes |
 | Enterprise | ∞ | ∞ | ∞ | Yes |
 
-## Phase 3 — What to do
-1. Install and configure Kinde auth (`@kinde-oss/kinde-auth-nextjs`)
-2. Add env vars: `KINDE_CLIENT_ID`, `KINDE_CLIENT_SECRET`, `KINDE_ISSUER_URL`, `KINDE_SITE_URL`, `KINDE_POST_LOGOUT_REDIRECT_URL`, `KINDE_POST_LOGIN_REDIRECT_URL`
-3. Create `src/app/api/auth/[kindeAuth]/route.ts` — Kinde catch-all route handler
-4. Create `src/lib/auth.ts` — server-side `getUser()` helper
-5. Create onboarding flow: after first login, prompt Org Leaders to create their first org
-6. Protect `(app)` routes with middleware
+## Phase 4 — What to do
+1. Create a Stripe account, get test API keys
+2. Create products/prices in Stripe dashboard (Starter, Pro, Enterprise tiers)
+3. Add to `.env.local`:
+   ```
+   STRIPE_SECRET_KEY="sk_test_..."
+   STRIPE_WEBHOOK_SECRET="whsec_..."
+   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_..."
+   STRIPE_PRICE_STARTER="price_..."
+   STRIPE_PRICE_PRO="price_..."
+   STRIPE_PRICE_ENTERPRISE="price_..."
+   ```
+4. Tell Claude "Phase 4 ready"
 
 ## Working agreement
 - Build **phase by phase** — confirm each phase works before starting the next
