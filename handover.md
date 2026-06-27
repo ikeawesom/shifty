@@ -1,41 +1,47 @@
 # Shifty — Handover
 
-## Last completed: Phase 5 — Members + Invite Flow
+## Last completed: Phase 6 — Shifts (CRUD + Recurrence Engine)
 
 ### What was done
-- Installed `nodemailer` + `@types/nodemailer`
-- Created `src/lib/email.ts` — Nodemailer transporter singleton (SMTP_HOST/PORT/USERNAME/PASSWORD)
-- Created `src/lib/plans.ts` — `PLAN_MEMBER_LIMITS` constant (FREE:10, STARTER:20, PRO:50, ENTERPRISE:∞)
-- Created `src/app/api/invitations/route.ts`:
-  - POST: auth check, ADMIN guard, tier limit check, duplicate invite check, creates Invitation row (7-day expiry), sends invite email
-- Created `src/app/api/invitations/[token]/route.ts`:
-  - GET: if unauthenticated → redirect to Kinde login with return URL; validates token (not expired, not accepted, email match); upserts User (platformRole: MEMBER); upserts OrgMember (role: MEMBER); marks acceptedAt; redirects to `/dashboard`
-- Created `src/app/(app)/members/page.tsx` — member list + pending invites + invite form (ADMIN only)
-- Created `src/app/(app)/members/MemberInviteForm.tsx` — client form component
-- Updated `src/app/(app)/dashboard/page.tsx` — added nav links (Members for all, Billing only for ORG_LEADER)
-- Build passes cleanly
+- Updated `src/lib/plans.ts` — added `PLAN_ASSIGNEE_LIMITS` (FREE:1, STARTER:5, PRO:10, ENTERPRISE:∞)
+- Created `src/app/api/shifts/route.ts`:
+  - POST: ADMIN-only, enforces `PLAN_ASSIGNEE_LIMITS[user.plan]`, creates Shift + ShiftAssignees in one query
+- Created `src/app/api/shifts/[id]/route.ts`:
+  - GET: any org member can read; includes assignees → member → user
+  - PATCH: ADMIN-only; accepts partial update; if `assigneeIds` provided, replaces assignees atomically in a transaction (deleteMany + createMany); enforces assignee limit
+  - DELETE: ADMIN-only; deletes ShiftAssignee + ShiftCompletion + Shift in a transaction (no schema cascade)
+- Created `src/app/(app)/shifts/page.tsx` — list shifts sorted by startsAt; shows title, recurrence badge (hidden for ONE_OFF), date/time range, assignee names; "New shift" button for ADMINs only
+- Created `src/app/(app)/shifts/new/page.tsx` — ADMIN-only server page; loads org members; redirects non-admins to `/shifts`
+- Created `src/app/(app)/shifts/new/ShiftForm.tsx` — client form: title, description, startsAt, endsAt, recurrence select, assignee checkboxes; POSTs to `/api/shifts`; redirects to `/shifts` on success
+- Updated `src/app/(app)/dashboard/page.tsx` — added Shifts nav link (before Members)
+- Build passes cleanly, all 16 routes present
 
-### Invite flow
-1. ADMIN visits `/members`, enters email, submits form
-2. POST `/api/invitations` creates DB row + sends email with token link
-3. Invitee clicks link → `GET /api/invitations/[token]`
-4. If not logged in → redirected to Kinde login → back to accept route
-5. Token validated → OrgMember created (role: MEMBER) → redirect `/dashboard`
-
-### Key env vars used
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `EMAIL_FROM`, `EMAIL_FROM_NAME`
+### Shift flow
+1. ADMIN clicks "New shift" on `/shifts`
+2. Fills form → POST `/api/shifts` → creates Shift + ShiftAssignees
+3. Redirected to `/shifts` list
+4. Any org member can view `/shifts`
+5. PATCH `/api/shifts/[id]` — update fields / reassign
+6. DELETE `/api/shifts/[id]` — ADMIN removes shift
 
 ### Key files
-- `src/lib/email.ts` — Nodemailer transporter + sendInviteEmail
-- `src/lib/plans.ts` — PLAN_MEMBER_LIMITS
-- `src/app/api/invitations/route.ts` — create invitation
-- `src/app/api/invitations/[token]/route.ts` — accept invitation
-- `src/app/(app)/members/page.tsx` — members page
-- `src/app/(app)/members/MemberInviteForm.tsx` — invite form
+- `src/lib/plans.ts` — PLAN_MEMBER_LIMITS + PLAN_ASSIGNEE_LIMITS
+- `src/app/api/shifts/route.ts` — POST create
+- `src/app/api/shifts/[id]/route.ts` — GET / PATCH / DELETE
+- `src/app/(app)/shifts/page.tsx` — shift list
+- `src/app/(app)/shifts/new/page.tsx` — create shift page
+- `src/app/(app)/shifts/new/ShiftForm.tsx` — client form
 
 ---
 
 ## Previous phases
+
+### Phase 5 — Members + Invite Flow
+- `src/lib/email.ts` — Nodemailer transporter + sendInviteEmail
+- `src/app/api/invitations/route.ts` — create invitation + send email
+- `src/app/api/invitations/[token]/route.ts` — accept invitation
+- `src/app/(app)/members/page.tsx` — members page
+- `src/app/(app)/members/MemberInviteForm.tsx` — invite form
 
 ### Phase 4 — Billing (Stripe)
 - `src/lib/stripe.ts` — singleton + `PLAN_TO_PRICE` / `PRICE_TO_PLAN` maps
@@ -63,13 +69,10 @@
 
 ---
 
-## Next: Phase 6 — Shifts (CRUD + Recurrence Engine)
+## Next: Phase 7 — Completion Tracking
 
 ### What to build
-- Shift model already in DB: title, description, startsAt, endsAt, recurrence (ONE_OFF/DAILY/WEEKLY/MONTHLY)
-- `src/app/(app)/shifts/page.tsx` — list shifts for the org
-- `src/app/(app)/shifts/new/page.tsx` — create shift form (title, dates, recurrence, assignees)
-- `src/app/api/shifts/route.ts` — POST create shift (enforce assignee limits per plan)
-- `src/app/api/shifts/[id]/route.ts` — GET, PATCH, DELETE
-- Assignee limit enforcement: check ShiftAssignee count against `Plan` limits (FREE:1, STARTER:5, PRO:10, ENTERPRISE:∞)
-- Only ADMINs can create/edit/delete shifts
+- `src/app/api/shifts/[id]/complete/route.ts` — POST: any org member marks a shift complete (creates ShiftCompletion row)
+- `src/app/(app)/shifts/[id]/page.tsx` — shift detail page: shows assignees, completion history, "Mark complete" button for assignees
+- Prevent duplicate completions (one per member per shift? or allow multiple — TBD)
+- Display completion status on the shifts list page

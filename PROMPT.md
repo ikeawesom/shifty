@@ -3,7 +3,7 @@
 We are building **Shifty**, a shift and task delegation management SaaS platform.
 
 ## Current status
-**Phase 5 (Members + Invite Flow) is complete. Starting Phase 6: Shifts (CRUD + Recurrence Engine).**
+**Phase 6 (Shifts CRUD + Recurrence Engine) is complete. Starting Phase 7: Completion Tracking.**
 
 ## What was built so far
 - Next.js 16 App Router + TypeScript + Tailwind CSS + shadcn/ui scaffolded and building cleanly
@@ -30,11 +30,16 @@ We are building **Shifty**, a shift and task delegation management SaaS platform
 - `src/components/billing/PricingCards.tsx` — client pricing UI (Starter / Pro / Enterprise)
 - `src/app/(app)/settings/billing/page.tsx` — billing settings page
 - `src/lib/email.ts` — Nodemailer transporter (Gmail SMTP via SMTP_USERNAME/SMTP_PASSWORD)
-- `src/lib/plans.ts` — PLAN_MEMBER_LIMITS constant
+- `src/lib/plans.ts` — PLAN_MEMBER_LIMITS + PLAN_ASSIGNEE_LIMITS
 - `src/app/api/invitations/route.ts` — POST: create Invitation row + send invite email
 - `src/app/api/invitations/[token]/route.ts` — GET: validate token → create OrgMember → redirect to dashboard
 - `src/app/(app)/members/page.tsx` — member list + pending invites + invite form (ADMIN only)
 - `src/app/(app)/members/MemberInviteForm.tsx` — client invite form component
+- `src/app/api/shifts/route.ts` — POST: create shift (ADMIN only, enforce assignee limits per plan)
+- `src/app/api/shifts/[id]/route.ts` — GET (anyone in org), PATCH + DELETE (ADMIN only, transactional)
+- `src/app/(app)/shifts/page.tsx` — shift list with recurrence badge + assignee names
+- `src/app/(app)/shifts/new/page.tsx` — create shift page (ADMIN only)
+- `src/app/(app)/shifts/new/ShiftForm.tsx` — client form: title, description, dates, recurrence, assignee checkboxes
 
 ## Tech stack
 - Next.js 16 App Router + TypeScript
@@ -58,25 +63,18 @@ We are building **Shifty**, a shift and task delegation management SaaS platform
 | Pro | 8 | 50 | 10 | Yes |
 | Enterprise | ∞ | ∞ | ∞ | Yes |
 
-## Phase 6 — What to build
+## Phase 7 — What to build
 
 ### What Claude will build
-- `src/app/(app)/shifts/page.tsx` — list of shifts for the current org (title, date, recurrence badge, assignees)
-- `src/app/(app)/shifts/new/page.tsx` — create shift form with client component: title, description, startsAt, endsAt, recurrence (ONE_OFF/DAILY/WEEKLY/MONTHLY), assignee picker (org members)
-- `src/app/api/shifts/route.ts` — POST: ADMIN only, enforce assignee limit per plan, create Shift + ShiftAssignees
-- `src/app/api/shifts/[id]/route.ts` — GET (anyone in org), PATCH + DELETE (ADMIN only)
-- Assignee plan limits: FREE=1, STARTER=5, PRO=10, ENTERPRISE=∞ (add to `src/lib/plans.ts`)
-- Add `/shifts` link to dashboard nav
+- `src/app/api/shifts/[id]/complete/route.ts` — POST: any org member marks a shift complete; creates ShiftCompletion row; one completion per member per shift (upsert or 409 if already completed)
+- `src/app/(app)/shifts/[id]/page.tsx` — shift detail page: title, description, date range, recurrence, assignees list, completion history (who completed + when + notes), "Mark complete" button for assigned members
+- Update `src/app/(app)/shifts/page.tsx` — show completion status on each shift row (e.g., "X/Y completed")
 
-### Assignee limits (to add to plans.ts)
-```ts
-export const PLAN_ASSIGNEE_LIMITS: Record<Plan, number> = {
-  FREE: 1,
-  STARTER: 5,
-  PRO: 10,
-  ENTERPRISE: Infinity,
-}
-```
+### ShiftCompletion rules
+- Any org member can mark complete (not just assignees)
+- One completion per member per shift — if already completed, return 409
+- Optional `notes` field in POST body
+- `completedById` is the OrgMember ID (not User ID)
 
 ## Working agreement
 - Build **phase by phase** — confirm each phase works before starting the next
