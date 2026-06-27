@@ -32,6 +32,9 @@ export default async function DashboardPage() {
       </p>
 
       <nav className="flex gap-4 text-sm">
+        <Link href="/shifts" className="text-muted-foreground hover:text-foreground transition-colors">
+          Shifts
+        </Link>
         <Link href="/members" className="text-muted-foreground hover:text-foreground transition-colors">
           Members
         </Link>
