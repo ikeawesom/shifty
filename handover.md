@@ -1,50 +1,49 @@
 # Shifty — Handover
 
-## Last completed: Phase 4 — Billing (Stripe)
+## Last completed: Phase 5 — Members + Invite Flow
 
 ### What was done
-- Created `src/lib/stripe.ts` — singleton Stripe client + `PLAN_TO_PRICE` / `PRICE_TO_PLAN` maps
-- Created `src/app/api/webhooks/stripe/route.ts`:
-  - Verifies Stripe signature via `stripe.webhooks.constructEvent`
-  - `checkout.session.completed` → updates `stripeCustomerId`, `stripeSubscriptionId`, `plan` on User
-  - `customer.subscription.updated` → syncs plan change from price ID
-  - `customer.subscription.deleted` → resets to `FREE`, clears `stripeSubscriptionId`
-- Created `src/app/api/billing/checkout/route.ts` — creates Stripe Hosted Checkout Session (subscription mode)
-- Created `src/app/api/billing/portal/route.ts` — creates Stripe Customer Portal session
-- Created `src/components/billing/PricingCards.tsx` — client component: 3 tier cards, upgrade/portal buttons
-- Created `src/app/(app)/settings/billing/page.tsx` — shows current plan + PricingCards
+- Installed `nodemailer` + `@types/nodemailer`
+- Created `src/lib/email.ts` — Nodemailer transporter singleton (SMTP_HOST/PORT/USERNAME/PASSWORD)
+- Created `src/lib/plans.ts` — `PLAN_MEMBER_LIMITS` constant (FREE:10, STARTER:20, PRO:50, ENTERPRISE:∞)
+- Created `src/app/api/invitations/route.ts`:
+  - POST: auth check, ADMIN guard, tier limit check, duplicate invite check, creates Invitation row (7-day expiry), sends invite email
+- Created `src/app/api/invitations/[token]/route.ts`:
+  - GET: if unauthenticated → redirect to Kinde login with return URL; validates token (not expired, not accepted, email match); upserts User (platformRole: MEMBER); upserts OrgMember (role: MEMBER); marks acceptedAt; redirects to `/dashboard`
+- Created `src/app/(app)/members/page.tsx` — member list + pending invites + invite form (ADMIN only)
+- Created `src/app/(app)/members/MemberInviteForm.tsx` — client form component
+- Updated `src/app/(app)/dashboard/page.tsx` — added nav links (Members for all, Billing only for ORG_LEADER)
 - Build passes cleanly
 
-### Billing flow
-1. User visits `/settings/billing` → sees current plan badge + 3 pricing cards (Starter / Pro / Enterprise)
-2. Clicks "Upgrade" → POST `/api/billing/checkout` → Stripe Hosted Checkout redirect
-3. Pays → Stripe fires `checkout.session.completed` → webhook updates User plan in DB
-4. User redirected back to `/settings/billing?success=1`
-5. Existing subscribers click "Manage Billing" → POST `/api/billing/portal` → Stripe portal (cancel/downgrade)
-6. Cancel → Stripe fires `customer.subscription.deleted` → plan resets to FREE
+### Invite flow
+1. ADMIN visits `/members`, enters email, submits form
+2. POST `/api/invitations` creates DB row + sends email with token link
+3. Invitee clicks link → `GET /api/invitations/[token]`
+4. If not logged in → redirected to Kinde login → back to accept route
+5. Token validated → OrgMember created (role: MEMBER) → redirect `/dashboard`
 
-### Testing
-```
-# terminal 1
-npm run dev
-
-# terminal 2
-stripe listen --forward-to localhost:3000/api/webhooks/stripe
-
-# test card: 4242 4242 4242 4242, any future expiry, any CVC
-```
+### Key env vars used
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `EMAIL_FROM`, `EMAIL_FROM_NAME`
 
 ### Key files
-- `src/lib/stripe.ts` — Stripe singleton + plan↔price maps
+- `src/lib/email.ts` — Nodemailer transporter + sendInviteEmail
+- `src/lib/plans.ts` — PLAN_MEMBER_LIMITS
+- `src/app/api/invitations/route.ts` — create invitation
+- `src/app/api/invitations/[token]/route.ts` — accept invitation
+- `src/app/(app)/members/page.tsx` — members page
+- `src/app/(app)/members/MemberInviteForm.tsx` — invite form
+
+---
+
+## Previous phases
+
+### Phase 4 — Billing (Stripe)
+- `src/lib/stripe.ts` — singleton + `PLAN_TO_PRICE` / `PRICE_TO_PLAN` maps
 - `src/app/api/webhooks/stripe/route.ts` — subscription sync
 - `src/app/api/billing/checkout/route.ts` — checkout
 - `src/app/api/billing/portal/route.ts` — portal
 - `src/components/billing/PricingCards.tsx` — billing UI
 - `src/app/(app)/settings/billing/page.tsx` — billing page
-
----
-
-## Previous phases
 
 ### Phase 3 — Auth + Onboarding (Kinde)
 - `src/lib/auth.ts` — `getUser()`, `requireUser()`, `syncUser()` helpers
@@ -64,11 +63,13 @@ stripe listen --forward-to localhost:3000/api/webhooks/stripe
 
 ---
 
-## Next: Phase 5 — Members + Invite Flow
+## Next: Phase 6 — Shifts (CRUD + Recurrence Engine)
 
 ### What to build
-- Invite member by email: generate signed token, store `Invitation` row, send email
-- Accept invite route: validate token → create `OrgMember` (role: MEMBER)
-- Member dashboard: same `/dashboard` but no billing link
-- Enforce tier member limits on invite send (check against `Plan` limits)
-- Email via Nodemailer + Gmail SMTP (env vars: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`)
+- Shift model already in DB: title, description, startsAt, endsAt, recurrence (ONE_OFF/DAILY/WEEKLY/MONTHLY)
+- `src/app/(app)/shifts/page.tsx` — list shifts for the org
+- `src/app/(app)/shifts/new/page.tsx` — create shift form (title, dates, recurrence, assignees)
+- `src/app/api/shifts/route.ts` — POST create shift (enforce assignee limits per plan)
+- `src/app/api/shifts/[id]/route.ts` — GET, PATCH, DELETE
+- Assignee limit enforcement: check ShiftAssignee count against `Plan` limits (FREE:1, STARTER:5, PRO:10, ENTERPRISE:∞)
+- Only ADMINs can create/edit/delete shifts

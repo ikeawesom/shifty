@@ -8,8 +8,8 @@
 | 2 | Database (Supabase + Prisma) | ✅ Done |
 | 3 | Auth + Onboarding (Kinde) | ✅ Done |
 | 4 | Billing (Stripe) | ✅ Done |
-| 5 | Members + Invite Flow | ⏳ Next |
-| 6 | Shifts (CRUD + recurrence engine) | — |
+| 5 | Members + Invite Flow | ✅ Done |
+| 6 | Shifts (CRUD + recurrence engine) | ⏳ Next |
 | 7 | Completion Tracking | — |
 | 8 | Dashboards | — |
 | 9 | Multi-Org | — |
@@ -17,30 +17,32 @@
 | 11 | Marketing Pages | — |
 | 12 | Polish + Deploy | — |
 
-## Current Phase: 5 — Members + Invite Flow
+## Current Phase: 6 — Shifts (CRUD + Recurrence Engine)
 
 ### What to build
-- Invite member by email (token-based)
-- Accept invite → create OrgMember (role: MEMBER)
-- Member dashboard view (no billing)
-- Enforce tier limits on invite send
+- Shift list page for the org (`/shifts`)
+- Create shift form (`/shifts/new`) — title, dates, recurrence, assignees
+- API routes: POST create, GET/PATCH/DELETE by ID
+- Assignee limit enforcement per plan (FREE:1, STARTER:5, PRO:10, ENTERPRISE:∞)
+- ADMINs only can create/edit/delete
 
-## Completed Phase: 4 — Billing (Stripe)
+## Completed Phase: 5 — Members + Invite Flow
 
 ### What was built
-- `src/lib/stripe.ts` — singleton + `PLAN_TO_PRICE` / `PRICE_TO_PLAN` maps
-- `src/app/api/webhooks/stripe/route.ts` — handles `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`
-- `src/app/api/billing/checkout/route.ts` — creates Stripe Checkout Session
-- `src/app/api/billing/portal/route.ts` — creates Stripe Customer Portal session
-- `src/components/billing/PricingCards.tsx` — client pricing UI (3 tiers, upgrade/manage billing)
-- `src/app/(app)/settings/billing/page.tsx` — billing settings page
+- `src/lib/email.ts` — Nodemailer transporter + sendInviteEmail
+- `src/lib/plans.ts` — PLAN_MEMBER_LIMITS
+- `src/app/api/invitations/route.ts` — create invitation + send email
+- `src/app/api/invitations/[token]/route.ts` — validate token → create OrgMember → redirect
+- `src/app/(app)/members/page.tsx` — member list + pending invites + invite form
+- `src/app/(app)/members/MemberInviteForm.tsx` — client invite form
+- Updated dashboard with nav links (billing hidden from MEMBERs)
 
 ## Tech Stack
 - Next.js 16 App Router + TypeScript
 - Tailwind CSS + shadcn/ui
 - Prisma 7 + Supabase (PostgreSQL)
 - Kinde (auth)
-- Stripe (billing) — CLI-assisted setup
+- Stripe (billing)
 - Gmail SMTP / Nodemailer (email)
 - Vercel Cron (reminders)
 - Vercel (deploy)

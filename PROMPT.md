@@ -3,7 +3,7 @@
 We are building **Shifty**, a shift and task delegation management SaaS platform.
 
 ## Current status
-**Phase 4 (Billing) is complete. Starting Phase 5: Members + Invite Flow.**
+**Phase 5 (Members + Invite Flow) is complete. Starting Phase 6: Shifts (CRUD + Recurrence Engine).**
 
 ## What was built so far
 - Next.js 16 App Router + TypeScript + Tailwind CSS + shadcn/ui scaffolded and building cleanly
@@ -20,7 +20,7 @@ We are building **Shifty**, a shift and task delegation management SaaS platform
 - `src/app/api/auth/[kindeAuth]/route.ts` — Kinde catch-all route handler
 - `src/lib/auth.ts` — `getUser()`, `requireUser()`, `syncUser()` server helpers
 - `src/proxy.ts` — route proxy protecting app routes (Next.js 16: middleware → proxy)
-- `src/app/(app)/dashboard/page.tsx` — protected dashboard with user sync + org redirect
+- `src/app/(app)/dashboard/page.tsx` — protected dashboard with user sync + org redirect + nav links (billing hidden from MEMBERs)
 - `src/app/(app)/org/new/page.tsx` — onboarding: create first org (server action)
 - `src/app/page.tsx` — marketing home with sign in / register links
 - `src/lib/stripe.ts` — Stripe singleton + plan↔price maps
@@ -29,6 +29,12 @@ We are building **Shifty**, a shift and task delegation management SaaS platform
 - `src/app/api/billing/portal/route.ts` — creates Stripe Customer Portal session
 - `src/components/billing/PricingCards.tsx` — client pricing UI (Starter / Pro / Enterprise)
 - `src/app/(app)/settings/billing/page.tsx` — billing settings page
+- `src/lib/email.ts` — Nodemailer transporter (Gmail SMTP via SMTP_USERNAME/SMTP_PASSWORD)
+- `src/lib/plans.ts` — PLAN_MEMBER_LIMITS constant
+- `src/app/api/invitations/route.ts` — POST: create Invitation row + send invite email
+- `src/app/api/invitations/[token]/route.ts` — GET: validate token → create OrgMember → redirect to dashboard
+- `src/app/(app)/members/page.tsx` — member list + pending invites + invite form (ADMIN only)
+- `src/app/(app)/members/MemberInviteForm.tsx` — client invite form component
 
 ## Tech stack
 - Next.js 16 App Router + TypeScript
@@ -52,26 +58,25 @@ We are building **Shifty**, a shift and task delegation management SaaS platform
 | Pro | 8 | 50 | 10 | Yes |
 | Enterprise | ∞ | ∞ | ∞ | Yes |
 
-## Phase 5 — What to do
-
-### Prerequisites
-- Gmail SMTP credentials for sending invite emails
-- Add to `.env.local`:
-  ```
-  SMTP_HOST="smtp.gmail.com"
-  SMTP_PORT="587"
-  SMTP_USER="your@gmail.com"
-  SMTP_PASS="your-app-password"
-  ```
-- Tell Claude **"Phase 5 ready"** once env vars are set
+## Phase 6 — What to build
 
 ### What Claude will build
-- `src/lib/email.ts` — Nodemailer transporter singleton
-- `src/app/api/invitations/route.ts` — POST: create Invitation row, send invite email with signed token
-- `src/app/api/invitations/[token]/route.ts` — GET: validate token → create OrgMember (MEMBER) → redirect to dashboard
-- `src/app/(app)/members/page.tsx` — member list + invite form for org ADMINs
-- Tier limit enforcement: check member count against `Plan` limits before sending invite
-- Member vs leader dashboard distinction: members see no billing link
+- `src/app/(app)/shifts/page.tsx` — list of shifts for the current org (title, date, recurrence badge, assignees)
+- `src/app/(app)/shifts/new/page.tsx` — create shift form with client component: title, description, startsAt, endsAt, recurrence (ONE_OFF/DAILY/WEEKLY/MONTHLY), assignee picker (org members)
+- `src/app/api/shifts/route.ts` — POST: ADMIN only, enforce assignee limit per plan, create Shift + ShiftAssignees
+- `src/app/api/shifts/[id]/route.ts` — GET (anyone in org), PATCH + DELETE (ADMIN only)
+- Assignee plan limits: FREE=1, STARTER=5, PRO=10, ENTERPRISE=∞ (add to `src/lib/plans.ts`)
+- Add `/shifts` link to dashboard nav
+
+### Assignee limits (to add to plans.ts)
+```ts
+export const PLAN_ASSIGNEE_LIMITS: Record<Plan, number> = {
+  FREE: 1,
+  STARTER: 5,
+  PRO: 10,
+  ENTERPRISE: Infinity,
+}
+```
 
 ## Working agreement
 - Build **phase by phase** — confirm each phase works before starting the next
