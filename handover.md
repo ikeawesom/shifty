@@ -1,52 +1,49 @@
 # Shifty — Handover
 
-## Last worked on: Phase 12 — Polish + Deploy (in progress)
+## Last worked on: Phase 12 — Polish + Deploy (display_name plan complete)
 
 ### What was done THIS session
 
-#### Plan 1 — Admin Bar Modifications ✅
-- Prisma `Notification` model + `NotificationType` enum added to schema; migration `20260628141429_add_notifications` applied to Supabase
-- `src/components/app/NotificationBell.tsx` — bell icon with red unread badge; fade/grow popup anchored top-right; fetches `GET /api/notifications` on mount; `PATCH /api/notifications` marks all read on open
-- `src/components/app/GlobalSearch.tsx` — debounced 300ms input; `GET /api/search?q=...` returns Shifts across user's orgs with org name subtitle; dropdown navigates on click
-- `src/app/api/notifications/route.ts` — GET (last 20, newest first) + PATCH (mark all read)
-- `src/app/api/search/route.ts` — GET searches shifts by title across user's orgs
-- `src/app/api/invitations/route.ts` — creates `INVITED_TO_ORG` notification for existing users on invite
-- `src/app/api/invitations/[token]/route.ts` — creates `MEMBER_JOINED` notification for org owner on accept
-- `src/app/api/cron/reminders/route.ts` — creates `REMINDER_SENT` notification after each reminder email
-- `src/app/(app)/dashboard/page.tsx` — static search + bell replaced with `<GlobalSearch />` + `<NotificationBell userId={user.id} />`; admin bar now `hidden md:flex`
+#### Plan 3 — UI Polish ✅
+- `src/app/globals.css` — `cursor: pointer` for all interactive elements (`button:not([disabled])`, `a`, `[role="button"]`, `select`, `label`)
 
-#### Plan 2 — Environment Modifications ✅
-- `src/app/(app)/layout.tsx` — desktop sidebar `hidden md:flex`; mobile fixed header (h-14, z-50) with `<MobileSidebar>`; main content `md:ml-64 mt-14 md:mt-0`; `isOrgAdmin` derived from `activeMembership?.role === OrgRole.ADMIN`; `LogoutLink` replaced with `<ProfileMenu>`
-- `src/components/app/SidebarNav.tsx` — added `isOrgAdmin: boolean` prop; Settings2 link for admins; Settings active state is exact-match only (avoids false positives with `/settings/billing` + `/settings/reminders`)
-- `src/components/app/MobileSidebar.tsx` — Sheet-based hamburger drawer; mirrors desktop sidebar (SidebarNav + OrgSwitcher + ProfileMenu)
-- `src/components/app/ProfileMenu.tsx` — avatar initial button; popup above (fade/grow, bottom-left anchor); "My Profile" → opens ProfileModal; "Sign Out" → LogoutLink
-- `src/components/app/ProfileModal.tsx` — Dialog; 4 sections: Display Name (PATCH `/api/user/profile`), Email (read-only), Password Reset (POST `/api/user/password-reset`), Delete Account (DELETE `/api/user/account`)
-- `src/app/(app)/settings/page.tsx` — server, ADMIN-only guard; OrgSettingsForm + DeleteOrgButton
-- `src/app/(app)/settings/OrgSettingsForm.tsx` — PATCH org name via `/api/orgs/[id]`, calls `router.refresh()`
-- `src/app/(app)/settings/DeleteOrgButton.tsx` — type-org-name-to-confirm deletion; DELETE `/api/orgs/[id]`; redirects to dashboard
-- `src/app/api/orgs/[id]/route.ts` — PATCH (rename, owner-only) + DELETE (delete org + clear active-org cookie, owner-only)
-- `src/app/api/user/profile/route.ts` — PATCH display name
-- `src/app/api/user/password-reset/route.ts` — POST stub (returns ok)
-- `src/app/api/user/account/route.ts` — DELETE user (cascades via Prisma) + returns Kinde logout URL
+#### Plan 4 — Search Enhancement ✅
+- `src/app/api/search/route.ts` — added member search via `getActiveOrg(user.id)`; queries `OrgMember` by `user.email OR user.name`; returns `members[]` alongside `shifts[]`
+- `src/components/app/GlobalSearch.tsx` — `max-w-sm` → `w-full`; `MemberResult` type; Members section in dropdown; clicking navigates to `/members`
+
+#### Display Name Plan (8 commits) ✅
+- `prisma/schema.prisma` + migration `20260628152731_add_org_member_display_name` — `displayName String?` added to `OrgMember`
+- `src/app/api/org-member/display-name/route.ts` (new) — `PATCH` updates org-scoped display name for active org member
+- `src/app/(app)/settings/profile/page.tsx` + `DisplayNameForm.tsx` (new) — profile settings page accessible to all members; shows current `displayName`, saves via `PATCH /api/org-member/display-name`
+- `src/components/app/SidebarNav.tsx` — added `UserCog` "My Profile" link to `BASE_LINKS` (visible to all members)
+- `src/components/app/ProfileModal.tsx` — heading "Display Name" → "Name"; added sub-label "Your global account name across all organisations."
+- `src/app/api/search/route.ts` — full rewrite: single `activeOrg.orgId` scope; members filtered by `displayName`; `realName` in response for admins only; fixes pre-existing `activeOrg.id` vs `activeOrg.orgId` bug
+- `src/components/app/GlobalSearch.tsx` — `MemberResult` type updated (`displayName`, `realName?`); member row shows `displayName ?? '—'` + conditional `realName`
+- `src/app/(app)/members/page.tsx` — name display: `displayName ?? user.name ?? user.email`
+
+#### Force push
+- Remote was diverged (stale at Phase 6 with different SHA history). Force-pushed local master to bring remote up to date.
 
 ---
 
-### What's immediately next (Phase 12 — remaining)
+### What's immediately next (Phase 12 — remaining items)
 
 1. **Error pages**
    - `src/app/not-found.tsx` — 404 page with "Go home" link
    - `src/app/error.tsx` — error boundary with retry button
 
-2. **Loading states** (`loading.tsx` files using shadcn/ui `Skeleton`)
+2. **Loading states**
    - `src/app/(app)/dashboard/loading.tsx`
    - `src/app/(app)/shifts/loading.tsx`
    - `src/app/(app)/members/loading.tsx`
+   - Use shadcn/ui `Skeleton` component
 
-3. **SEO** — `metadata` export in `src/app/layout.tsx`, landing page, and marketing pages (title, description, Open Graph)
+3. **SEO** — `metadata` export in:
+   - `src/app/layout.tsx` (root)
+   - `src/app/page.tsx` (landing)
+   - `src/app/(marketing)/layout.tsx`
 
-4. **Env var audit** — all secrets documented in PLAN.md; confirm all are set in Vercel before deploy
-
-5. **Vercel deployment** — push to GitHub, connect Vercel, add env vars, deploy
+4. **Env var audit** + **Vercel deployment**
 
 ---
 

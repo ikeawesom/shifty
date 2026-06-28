@@ -3,29 +3,291 @@
 We are building **Shifty**, a shift and task delegation management SaaS platform.
 
 ## Current status
-**Phase 12 (Polish + Deploy) is nearly complete.**
+**Phase 12 (Polish + Deploy) — Plans 1–4 and the display_name plan are all complete.**
 
-Plans 1 and 2 have been fully executed. The remaining work is error pages, loading states, SEO, and Vercel deployment.
+Remaining items: error pages → loading states → SEO metadata → Vercel deploy.
 
-## Immediate next steps
+## Immediate task: error pages + loading states + SEO
 
-### 1. Error pages
-- `src/app/not-found.tsx` — 404 with "Go home" link, matches app visual style
-- `src/app/error.tsx` — error boundary with retry button
+### Error pages
+- `src/app/not-found.tsx` — 404 with "Go home" button
+- `src/app/error.tsx` — error boundary with retry button (must be a client component with `'use client'`)
 
-### 2. Loading states (shadcn/ui `Skeleton`)
+### Loading states (shadcn/ui Skeleton)
 - `src/app/(app)/dashboard/loading.tsx`
 - `src/app/(app)/shifts/loading.tsx`
 - `src/app/(app)/members/loading.tsx`
 
-### 3. SEO metadata
-Add `metadata` export to:
-- `src/app/layout.tsx` (global defaults)
-- `src/app/page.tsx` (landing page)
-- `src/app/(marketing)/layout.tsx` (marketing pages)
+### SEO metadata
+- Root layout `src/app/layout.tsx` — `export const metadata: Metadata`
+- Landing page `src/app/page.tsx` — page-level metadata
+- Marketing layout `src/app/(marketing)/layout.tsx` — shared marketing metadata
 
-### 4. Env var audit + Vercel deploy
-Confirm all env vars from PLAN.md are set in Vercel, then deploy.
+---
+
+### Archived: display_name plan (complete)
+
+Execute commits in this order: 1 → 2 → (3, 4, 5 in parallel) → (6, 7 together) → 8 ✅
+
+---
+
+### Archived Commit 1 — `prisma: add displayName to OrgMember`
+**Files:** `prisma/schema.prisma` + new migration
+
+Add `displayName String?` to `OrgMember` after the `role` field:
+```prisma
+model OrgMember {
+  id          String   @id @default(cuid())
+  userId      String
+  orgId       String
+  role        OrgRole  @default(MEMBER)
+  displayName String?
+  joinedAt    DateTime @default(now())
+  ...
+}
+```
+Run: `npx prisma migrate dev --name add_org_member_display_name`
+
+---
+
+### Commit 2 — `feat: add PATCH /api/org-member/display-name endpoint`
+**New file:** `src/app/api/org-member/display-name/route.ts`
+
+```ts
+import type { NextRequest } from 'next/server'
+import { syncUser } from '@/lib/auth'
+import { getActiveOrg } from '@/lib/org'
+import prisma from '@/lib/prisma'
+
+export async function PATCH(req: NextRequest) {
+  const user = await syncUser()
+  const activeOrg = await getActiveOrg(user.id)
+  if (!activeOrg) return Response.json({ error: 'No active organisation' }, { status: 400 })
+  const { displayName } = (await req.json()) as { displayName?: string }
+  await prisma.orgMember.update({
+    where: { userId_orgId: { userId: user.id, orgId: activeOrg.orgId } },
+    data: { displayName: displayName?.trim() || null },
+  })
+  return Response.json({ ok: true })
+}
+```
+
+---
+
+### Commit 3 — `feat: add /settings/profile page for org-scoped display name`
+**New files:** `src/app/(app)/settings/profile/page.tsx`, `src/app/(app)/settings/profile/DisplayNameForm.tsx`
+
+**`page.tsx`** — server component, no admin check, accessible to all members:
+```tsx
+import { syncUser } from '@/lib/auth'
+import { getActiveOrg } from '@/lib/org'
+import { redirect } from 'next/navigation'
+import DisplayNameForm from './DisplayNameForm'
+
+export default async function ProfileSettingsPage() {
+  const user = await syncUser()
+  const membership = await getActiveOrg(user.id)
+  if (!membership) redirect('/org/new')
+
+  return (
+    <main className="flex flex-col flex-1 gap-6 p-8 max-w-2xl">
+      <div>
+        <h1 className="text-2xl font-semibold">Profile</h1>
+        <p className="text-muted-foreground mt-1 text-sm">Your identity within {membership.org.name}</p>
+      </div>
+      <div className="bg-white border border-border rounded-2xl p-6 shadow-sm space-y-4">
+        <div>
+          <h2 className="text-base font-semibold">Display Name</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Shown to other members in {membership.org.name}. Falls back to your account name when not set.
+          </p>
+        </div>
+        <DisplayNameForm currentDisplayName={membership.displayName} />
+      </div>
+    </main>
+  )
+}
+```
+
+**`DisplayNameForm.tsx`** — client component, `useRef` + `useRouter().refresh()` pattern (same as `OrgSettingsForm`):
+```tsx
+'use client'
+import { useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
+
+export default function DisplayNameForm({ currentDisplayName }: { currentDisplayName: string | null }) {
+  const router = useRouter()
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSave() {
+    const displayName = inputRef.current?.value ?? ''
+    setSaving(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/org-member/display-name', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ displayName }),
+      })
+      if (!res.ok) { setError((await res.json()).error ?? 'Failed to save'); return }
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+      router.refresh()
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <input
+          ref={inputRef}
+          defaultValue={currentDisplayName ?? ''}
+          placeholder="Your name in this organisation"
+          className="flex-1 border border-border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+        />
+        <button onClick={handleSave} disabled={saving}
+          className="px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-lg disabled:opacity-60">
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+      </div>
+      {saved && <p className="text-xs text-green-600">Display name saved!</p>}
+      {error && <p className="text-xs text-red-600">{error}</p>}
+    </div>
+  )
+}
+```
+
+---
+
+### Commit 4 — `feat: add My Profile link to SidebarNav for all members`
+**File:** `src/components/app/SidebarNav.tsx`
+
+Add `UserCog` to lucide-react import. Add to `BASE_LINKS`:
+```ts
+{ href: '/settings/profile', label: 'My Profile', icon: UserCog }
+```
+Visible to all members. MobileSidebar picks this up automatically.
+
+---
+
+### Commit 5 — `fix: rename "Display Name" to "Name" in ProfileModal`
+**File:** `src/components/app/ProfileModal.tsx`
+
+Change heading from `"Display Name"` → `"Name"`. Add sub-label below heading:
+```tsx
+<p className="text-xs text-muted-foreground mb-3">Your global account name across all organisations.</p>
+```
+No functional changes.
+
+---
+
+### Commit 6 — `fix: search route — restrict to active org, search by displayName, privacy-aware response`
+**File:** `src/app/api/search/route.ts`
+
+Full rewrite:
+```ts
+import { syncUser } from '@/lib/auth'
+import { getActiveOrg } from '@/lib/org'
+import prisma from '@/lib/prisma'
+import { OrgRole } from '@prisma/client'
+
+export async function GET(request: Request) {
+  const user = await syncUser()
+  const { searchParams } = new URL(request.url)
+  const q = searchParams.get('q')?.trim() ?? ''
+  if (q.length < 2) return Response.json({ shifts: [], members: [] })
+
+  const activeOrg = await getActiveOrg(user.id)
+  if (!activeOrg) return Response.json({ shifts: [], members: [] })
+
+  const isAdmin = activeOrg.role === OrgRole.ADMIN
+
+  const [shifts, members] = await Promise.all([
+    prisma.shift.findMany({
+      where: { orgId: activeOrg.orgId, title: { contains: q, mode: 'insensitive' } },
+      select: { id: true, title: true, startsAt: true },
+      take: 8,
+      orderBy: { startsAt: 'asc' },
+    }),
+    prisma.orgMember.findMany({
+      where: { orgId: activeOrg.orgId, displayName: { contains: q, mode: 'insensitive' } },
+      select: {
+        id: true,
+        displayName: true,
+        role: true,
+        user: { select: { id: true, name: true } },
+      },
+      take: 5,
+    }),
+  ])
+
+  return Response.json({
+    shifts: shifts.map((s) => ({ ...s, orgName: activeOrg.org.name })),
+    members: members.map((m) => ({
+      id: m.id,
+      displayName: m.displayName,
+      role: m.role,
+      ...(isAdmin && { realName: m.user.name }),
+    })),
+  })
+}
+```
+
+**Key fixes in this commit:**
+- Removes multi-org shift search (was `orgId: { in: orgIds }`) — now single `activeOrg.orgId` only
+- Fixes pre-existing bug: was `orgId: activeOrg.id` (OrgMember PK) — now correctly `activeOrg.orgId`
+- Members filtered by `displayName`, not `user.name`/`user.email`
+- `realName` only included in response for admins
+
+---
+
+### Commit 7 — `fix: GlobalSearch — update MemberResult type and member row for displayName`
+**File:** `src/components/app/GlobalSearch.tsx`
+
+Update `MemberResult` type:
+```ts
+type MemberResult = {
+  id: string
+  displayName: string | null
+  role: string
+  realName?: string | null
+}
+```
+
+Update member row JSX — replace the two `<span>` lines inside the member button:
+```tsx
+<span className="text-sm font-medium">{m.displayName ?? '—'}</span>
+{m.realName != null && (
+  <span className="text-xs text-muted-foreground">{m.realName}</span>
+)}
+```
+
+---
+
+### Commit 8 — `fix: members page — show displayName with fallback to user.name then email`
+**File:** `src/app/(app)/members/page.tsx`
+
+The existing `include: { user: true }` query already returns `displayName` after the migration — no query changes needed.
+
+In the table body, change the member name display:
+```tsx
+// Before
+{m.user.name ?? m.user.email}
+// After
+{m.displayName ?? m.user.name ?? m.user.email}
+```
+
+---
+
+## Remaining Phase 12 items (next up)
+
+1. **Error pages** — `src/app/not-found.tsx` (404 + "Go home"), `src/app/error.tsx` (error boundary + retry)
+2. **Loading states** — `src/app/(app)/dashboard/loading.tsx`, `src/app/(app)/shifts/loading.tsx`, `src/app/(app)/members/loading.tsx` (shadcn/ui `Skeleton`)
+3. **SEO** — `metadata` export in `src/app/layout.tsx`, `src/app/page.tsx`, `src/app/(marketing)/layout.tsx`
+4. **Vercel deploy** — env var audit + deploy
 
 ---
 
@@ -50,14 +312,14 @@ Confirm all env vars from PLAN.md are set in Vercel, then deploy.
 - `src/app/(app)/shifts/page.tsx`, `shifts/new/page.tsx`, `shifts/new/ShiftForm.tsx`
 - Completion tracking: POST `/api/shifts/[id]/complete`
 - `src/app/(app)/shifts/[id]/page.tsx` + `MarkCompleteButton.tsx`
-- `src/lib/org.ts` — `ACTIVE_ORG_COOKIE` + `getActiveOrg(userId)` — **critical for multi-org; all app pages must use this**
+- `src/lib/org.ts` — `ACTIVE_ORG_COOKIE` + `getActiveOrg(userId)` — returns `OrgMember & { org: Organization }`; use `.orgId` (not `.id`) for org-scoped queries
 - `src/lib/org-actions.ts` — `switchOrg(orgId)` server action
 - POST `/api/orgs` — create org with plan limit check
 - `src/app/(app)/layout.tsx` — mobile-responsive: desktop `hidden md:flex` sidebar, mobile hamburger header → `MobileSidebar.tsx` (Sheet 80vw); `ProfileMenu` replaces LogoutLink; `isOrgAdmin` passed to SidebarNav
-- `src/components/app/SidebarNav.tsx` — `isLeader` + `isOrgAdmin` props; Settings2 link for admins
-- `src/components/app/MobileSidebar.tsx` — Sheet-based drawer (hamburger → full sidebar)
+- `src/components/app/SidebarNav.tsx` — `isLeader` + `isOrgAdmin` props; Settings2 link for admins; "My Profile" link for all members (added in display_name plan)
+- `src/components/app/MobileSidebar.tsx` — Sheet-based drawer; `SheetTrigger` styled directly (no nested button — `@base-ui/react` Trigger already renders a button)
 - `src/components/app/ProfileMenu.tsx` — avatar + name; popup with My Profile + Sign Out
-- `src/components/app/ProfileModal.tsx` — Dialog; name edit, email (read-only), password reset, delete account
+- `src/components/app/ProfileModal.tsx` — Dialog; name edit (User.name, global), email (read-only), password reset, delete account
 - `src/components/org/OrgSwitcher.tsx` — client dropdown: switch orgs + "New org" gated by plan limit
 - `src/app/(app)/org/new/page.tsx` + `OrgCreateForm.tsx`
 - PATCH `/api/orgs/reminders` — reminder settings (owner-only, plan-gated)
@@ -65,13 +327,13 @@ Confirm all env vars from PLAN.md are set in Vercel, then deploy.
 - `src/components/org/ReminderSettingsForm.tsx` + `src/app/(app)/settings/reminders/page.tsx`
 - `src/app/(app)/settings/page.tsx` — org admin only; `OrgSettingsForm.tsx` + `DeleteOrgButton.tsx` (type-to-confirm)
 - GET `/api/cron/reminders` — hourly cron handler with `CRON_SECRET` auth; creates `REMINDER_SENT` notifications
-- `src/app/globals.css` — purple primary theme, `scroll-behavior: smooth`, Geist font fix
+- `src/app/globals.css` — purple primary theme, `scroll-behavior: smooth`, Geist font fix, cursor pointer for all interactive elements
 - `src/components/marketing/MarketingHeader.tsx` — client component; IntersectionObserver for active section highlight; logo scroll-to-top
 - `src/components/marketing/MarketingFooter.tsx` + `src/app/(marketing)/layout.tsx`
 - `src/app/page.tsx` — full landing page (Hero, How It Works, Features bento, Pricing 4-card, dark CTA banner)
 - `src/app/(app)/dashboard/page.tsx` — admin view: sticky admin bar (`hidden md:flex`) with `<GlobalSearch />` + `<NotificationBell />`; greeting; 4 stat cards; bento grid (Shifts Overview + Team Status + Recent Activity)
 - `src/components/app/NotificationBell.tsx` — bell with unread badge; fade/grow popup; marks all read on open
-- `src/components/app/GlobalSearch.tsx` — debounced 300ms; Shifts dropdown with org subtitle; navigate on click
+- `src/components/app/GlobalSearch.tsx` — debounced 300ms; Shifts + Members dropdown; navigate on click
 - Notification system: `Notification` model in DB; `GET/PATCH /api/notifications`; `GET /api/search`; triggers in invitations + cron reminders routes
 - User API routes: `PATCH /api/user/profile`, `POST /api/user/password-reset`, `DELETE /api/user/account`
 

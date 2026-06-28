@@ -32,10 +32,8 @@ export default function MobileSidebar({
 }: MobileSidebarProps) {
   return (
     <Sheet>
-      <SheetTrigger asChild>
-        <button className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Open menu">
-          <Menu className="size-5" />
-        </button>
+      <SheetTrigger className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Open menu">
+        <Menu className="size-5" />
       </SheetTrigger>
       <SheetContent side="left" className="w-[80vw] p-0 flex flex-col">
         <div className="h-14 flex items-center px-6 border-b border-border/60 shrink-0">

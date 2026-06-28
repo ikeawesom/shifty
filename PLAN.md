@@ -29,21 +29,32 @@
 - **Landing page** (`src/app/page.tsx`): full Stitch-inspired overhaul; comparison table removed; features bento grid + inline pricing section
 - **Standalone `/pricing` page deleted** — content fully inlined on landing page
 - **App layout** (`src/app/(app)/layout.tsx`): mobile-responsive — desktop fixed `w-64` sidebar (`hidden md:flex`), mobile hamburger header → `MobileSidebar.tsx` (Sheet at 80vw); `md:ml-64 mt-14 md:mt-0` main content offset
-- **`src/components/app/SidebarNav.tsx`**: `isOrgAdmin` prop, Settings2 link for admins, active link fix for `/settings` exact match
+- **`src/components/app/SidebarNav.tsx`**: `isOrgAdmin` prop, Settings2 link for admins, active link fix for `/settings` exact match; `UserCog` "My Profile" link for all members
 - **Dashboard admin view redesign** (`src/app/(app)/dashboard/page.tsx`): sticky admin bar (`hidden md:flex`), greeting, 4 stat cards, bento grid. Bar now uses `<GlobalSearch />` + `<NotificationBell userId={user.id} />`
 - **Notification system**: `Notification` Prisma model + `NotificationType` enum; migration `20260628141429_add_notifications` applied; `GET/PATCH /api/notifications`; `GET /api/search`; triggers in invitations + cron reminders routes
 - **`src/components/app/NotificationBell.tsx`**: bell with unread badge, fade/grow popup, mark-all-read on open
-- **`src/components/app/GlobalSearch.tsx`**: debounced 300ms, dropdown shows Shifts with org subtitle, navigates on click
-- **`src/components/app/MobileSidebar.tsx`**: Sheet-based hamburger drawer mirroring desktop sidebar
+- **`src/components/app/GlobalSearch.tsx`**: debounced 300ms; Shifts + Members dropdown (members show `displayName`, admins see `realName`); full-width bar; navigates on click
+- **`src/components/app/MobileSidebar.tsx`**: Sheet-based hamburger drawer mirroring desktop sidebar; hydration bug fixed (no `asChild` nested button)
 - **`src/components/app/ProfileMenu.tsx`**: replaces LogoutLink; shows avatar initial + name/email; popup with My Profile + Sign Out
-- **`src/components/app/ProfileModal.tsx`**: Dialog; 4 sections (name edit, email readonly, password reset, delete account)
+- **`src/components/app/ProfileModal.tsx`**: Dialog; 4 sections (Name — global account name, email readonly, password reset, delete account)
 - **Settings page** (`src/app/(app)/settings/page.tsx`): org admin only; `OrgSettingsForm.tsx` + `DeleteOrgButton.tsx` (type-to-confirm); `PATCH/DELETE /api/orgs/[id]`
 - **User API routes**: `PATCH /api/user/profile`, `POST /api/user/password-reset`, `DELETE /api/user/account`
+- **Plan 3** — `globals.css`: cursor pointer for all interactive elements ✅
+- **Plan 4** — `api/search/route.ts` + `GlobalSearch.tsx`: member search by name/email in active org ✅
+- **Display Name Plan** (8 commits) ✅
+  - `prisma/schema.prisma` + migration `20260628152731_add_org_member_display_name` — `displayName String?` on `OrgMember`
+  - `PATCH /api/org-member/display-name` — update org-scoped display name
+  - `src/app/(app)/settings/profile/page.tsx` + `DisplayNameForm.tsx` — profile settings page for all members
+  - `src/components/app/SidebarNav.tsx` — "My Profile" link (`UserCog`) for all members
+  - `src/components/app/ProfileModal.tsx` — heading renamed "Display Name" → "Name" + sub-label
+  - `src/app/api/search/route.ts` — scoped to `activeOrg.orgId`, filters by `displayName`, admin-only `realName` in response
+  - `src/components/app/GlobalSearch.tsx` — updated `MemberResult` type + member row
+  - `src/app/(app)/members/page.tsx` — `displayName ?? user.name ?? user.email` fallback
 
 ### Still to do
 
 - **Error pages** — `src/app/not-found.tsx`, `src/app/error.tsx`
-- **Loading states** — `src/app/(app)/dashboard/loading.tsx`, `src/app/(app)/shifts/loading.tsx` (skeleton cards using shadcn/ui Skeleton)
+- **Loading states** — `src/app/(app)/dashboard/loading.tsx`, `src/app/(app)/shifts/loading.tsx`, `src/app/(app)/members/loading.tsx` (shadcn/ui Skeleton)
 - **SEO** — metadata + Open Graph in `src/app/layout.tsx`, landing + marketing pages
 - **Env var audit** — document all secrets needed for Vercel deploy
 - **Vercel deployment**
