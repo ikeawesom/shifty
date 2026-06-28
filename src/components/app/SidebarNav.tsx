@@ -2,12 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, CalendarDays, Users, Bell, CreditCard, Settings2 } from 'lucide-react'
+import { LayoutDashboard, CalendarDays, Users, Bell, CreditCard, Settings2, UserCog } from 'lucide-react'
 
 const BASE_LINKS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/shifts', label: 'Shifts', icon: CalendarDays },
   { href: '/members', label: 'Members', icon: Users },
+  { href: '/settings/profile', label: 'My Profile', icon: UserCog },
 ]
 
 const LEADER_LINKS = [
