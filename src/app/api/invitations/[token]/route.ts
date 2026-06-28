@@ -49,5 +49,20 @@ export async function GET(
     data: { acceptedAt: new Date() },
   })
 
+  const org = await prisma.organization.findUnique({
+    where: { id: invitation.orgId },
+    select: { ownerId: true, name: true },
+  })
+  if (org) {
+    await prisma.notification.create({
+      data: {
+        userId: org.ownerId,
+        type: 'MEMBER_JOINED',
+        title: 'New member joined',
+        body: `${user.name ?? user.email} joined ${org.name}.`,
+      },
+    })
+  }
+
   redirect('/dashboard')
 }

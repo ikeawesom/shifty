@@ -53,5 +53,17 @@ export async function POST(req: NextRequest) {
     inviteUrl,
   })
 
+  const existingUser = await prisma.user.findUnique({ where: { email } })
+  if (existingUser) {
+    await prisma.notification.create({
+      data: {
+        userId: existingUser.id,
+        type: 'INVITED_TO_ORG',
+        title: "You've been invited",
+        body: `You were invited to join ${membership.org.name}.`,
+      },
+    })
+  }
+
   return Response.json({ ok: true }, { status: 201 })
 }
