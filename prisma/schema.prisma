@@ -98,11 +98,12 @@ model Organization {
 }
 
 model OrgMember {
-  id       String   @id @default(cuid())
-  userId   String
-  orgId    String
-  role     OrgRole  @default(MEMBER)
-  joinedAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  userId      String
+  orgId       String
+  role        OrgRole  @default(MEMBER)
+  displayName String?
+  joinedAt    DateTime @default(now())
 
   user            User             @relation(fields: [userId], references: [id])
   org             Organization     @relation(fields: [orgId], references: [id])
