@@ -3,7 +3,7 @@
 We are building **Shifty**, a shift and task delegation management SaaS platform.
 
 ## Current status
-**Phase 6 (Shifts CRUD + Recurrence Engine) is complete. Starting Phase 7: Completion Tracking.**
+**Phase 7 (Completion Tracking) is complete. Starting Phase 8: Dashboards.**
 
 ## What was built so far
 - Next.js 16 App Router + TypeScript + Tailwind CSS + shadcn/ui scaffolded and building cleanly
@@ -40,6 +40,9 @@ We are building **Shifty**, a shift and task delegation management SaaS platform
 - `src/app/(app)/shifts/page.tsx` — shift list with recurrence badge + assignee names
 - `src/app/(app)/shifts/new/page.tsx` — create shift page (ADMIN only)
 - `src/app/(app)/shifts/new/ShiftForm.tsx` — client form: title, description, dates, recurrence, assignee checkboxes
+- `src/app/api/shifts/[id]/complete/route.ts` — POST: any org member marks shift complete; one per member per shift (409 if duplicate); optional notes
+- `src/app/(app)/shifts/[id]/page.tsx` — shift detail: title, dates, recurrence, assignees, completion history, "Mark complete" button
+- `src/app/(app)/shifts/[id]/MarkCompleteButton.tsx` — client button for marking complete
 
 ## Tech stack
 - Next.js 16 App Router + TypeScript
@@ -63,18 +66,10 @@ We are building **Shifty**, a shift and task delegation management SaaS platform
 | Pro | 8 | 50 | 10 | Yes |
 | Enterprise | ∞ | ∞ | ∞ | Yes |
 
-## Phase 7 — What to build
+## Phase 8 — What to build
 
 ### What Claude will build
-- `src/app/api/shifts/[id]/complete/route.ts` — POST: any org member marks a shift complete; creates ShiftCompletion row; one completion per member per shift (upsert or 409 if already completed)
-- `src/app/(app)/shifts/[id]/page.tsx` — shift detail page: title, description, date range, recurrence, assignees list, completion history (who completed + when + notes), "Mark complete" button for assigned members
-- Update `src/app/(app)/shifts/page.tsx` — show completion status on each shift row (e.g., "X/Y completed")
-
-### ShiftCompletion rules
-- Any org member can mark complete (not just assignees)
-- One completion per member per shift — if already completed, return 409
-- Optional `notes` field in POST body
-- `completedById` is the OrgMember ID (not User ID)
+TBD — dashboards showing shift completion stats, member activity, and org-level summaries.
 
 ## Working agreement
 - Build **phase by phase** — confirm each phase works before starting the next

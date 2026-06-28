@@ -1,8 +1,40 @@
 # Shifty — Handover
 
-## Last completed: Phase 6 — Shifts (CRUD + Recurrence Engine)
+## Last completed: Phase 7 — Completion Tracking
 
 ### What was done
+
+- Created `src/app/api/shifts/[id]/complete/route.ts`:
+  - POST: any org member can mark a shift complete; finds their OrgMember record; checks for existing completion and returns 409 if found; creates ShiftCompletion with optional `notes`
+- Created `src/app/(app)/shifts/[id]/page.tsx` — server component shift detail page: title, recurrence badge, date/time range, description, assignee list, "Mark complete" button (hidden if already completed), full completion history (who + when + notes)
+- Created `src/app/(app)/shifts/[id]/MarkCompleteButton.tsx` — client component; POSTs to `/api/shifts/[id]/complete`; calls `router.refresh()` on success; shows inline error on failure
+- Updated `src/app/(app)/shifts/page.tsx`:
+  - Each shift row is now a `<Link>` to `/shifts/[id]`
+  - Includes `completions: { select: { id: true } }` in query
+  - Shows `X/Y completed` badge (X = completions, Y = assignees)
+
+### Completion flow
+
+1. Any org member visits `/shifts/[id]`
+2. Clicks "Mark complete" → POST `/api/shifts/[id]/complete`
+3. Page refreshes; completion appears in history; button replaced with "already completed" message
+4. Shifts list shows updated X/Y count
+
+### Key files
+
+- `src/app/api/shifts/[id]/complete/route.ts` — POST complete
+- `src/app/(app)/shifts/[id]/page.tsx` — detail page
+- `src/app/(app)/shifts/[id]/MarkCompleteButton.tsx` — client button
+- `src/app/(app)/shifts/page.tsx` — updated list
+
+---
+
+## Previous phases
+
+### Phase 6 — Shifts (CRUD + Recurrence Engine)
+
+#### What was done
+
 - Updated `src/lib/plans.ts` — added `PLAN_ASSIGNEE_LIMITS` (FREE:1, STARTER:5, PRO:10, ENTERPRISE:∞)
 - Created `src/app/api/shifts/route.ts`:
   - POST: ADMIN-only, enforces `PLAN_ASSIGNEE_LIMITS[user.plan]`, creates Shift + ShiftAssignees in one query
@@ -17,6 +49,7 @@
 - Build passes cleanly, all 16 routes present
 
 ### Shift flow
+
 1. ADMIN clicks "New shift" on `/shifts`
 2. Fills form → POST `/api/shifts` → creates Shift + ShiftAssignees
 3. Redirected to `/shifts` list
@@ -25,6 +58,7 @@
 6. DELETE `/api/shifts/[id]` — ADMIN removes shift
 
 ### Key files
+
 - `src/lib/plans.ts` — PLAN_MEMBER_LIMITS + PLAN_ASSIGNEE_LIMITS
 - `src/app/api/shifts/route.ts` — POST create
 - `src/app/api/shifts/[id]/route.ts` — GET / PATCH / DELETE
@@ -37,6 +71,7 @@
 ## Previous phases
 
 ### Phase 5 — Members + Invite Flow
+
 - `src/lib/email.ts` — Nodemailer transporter + sendInviteEmail
 - `src/app/api/invitations/route.ts` — create invitation + send email
 - `src/app/api/invitations/[token]/route.ts` — accept invitation
@@ -44,6 +79,7 @@
 - `src/app/(app)/members/MemberInviteForm.tsx` — invite form
 
 ### Phase 4 — Billing (Stripe)
+
 - `src/lib/stripe.ts` — singleton + `PLAN_TO_PRICE` / `PRICE_TO_PLAN` maps
 - `src/app/api/webhooks/stripe/route.ts` — subscription sync
 - `src/app/api/billing/checkout/route.ts` — checkout
@@ -52,18 +88,21 @@
 - `src/app/(app)/settings/billing/page.tsx` — billing page
 
 ### Phase 3 — Auth + Onboarding (Kinde)
+
 - `src/lib/auth.ts` — `getUser()`, `requireUser()`, `syncUser()` helpers
 - `src/proxy.ts` — route protection (Next.js 16: `proxy.ts` not `middleware.ts`)
 - `src/app/(app)/dashboard/page.tsx` — protected dashboard, redirects to `/org/new` if no org
 - `src/app/(app)/org/new/page.tsx` — create first org (server action)
 
 ### Phase 2 — Database (Supabase + Prisma)
+
 - Prisma 7 + Supabase PostgreSQL
 - `prisma/schema.prisma` — 7 models, 4 enums
 - `src/lib/prisma.ts` — singleton PrismaClient with `PrismaPg` adapter
 - Migration `20260626141645_init` applied
 
 ### Phase 1 — Scaffold + Tooling
+
 - Next.js 16 App Router + TypeScript + Tailwind CSS + shadcn/ui
 - Full folder structure, `src/types/index.ts`, `vercel.json`
 
@@ -72,6 +111,7 @@
 ## Next: Phase 7 — Completion Tracking
 
 ### What to build
+
 - `src/app/api/shifts/[id]/complete/route.ts` — POST: any org member marks a shift complete (creates ShiftCompletion row)
 - `src/app/(app)/shifts/[id]/page.tsx` — shift detail page: shows assignees, completion history, "Mark complete" button for assignees
 - Prevent duplicate completions (one per member per shift? or allow multiple — TBD)

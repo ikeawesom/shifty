@@ -10,19 +10,25 @@
 | 4 | Billing (Stripe) | ✅ Done |
 | 5 | Members + Invite Flow | ✅ Done |
 | 6 | Shifts (CRUD + recurrence engine) | ✅ Done |
-| 7 | Completion Tracking | ⏳ Next |
-| 8 | Dashboards | — |
+| 7 | Completion Tracking | ✅ Done |
+| 8 | Dashboards | ⏳ Next |
 | 9 | Multi-Org | — |
 | 10 | Email Reminders (cron) | — |
 | 11 | Marketing Pages | — |
 | 12 | Polish + Deploy | — |
 
-## Current Phase: 7 — Completion Tracking
+## Current Phase: 8 — Dashboards
 
 ### What to build
-- `src/app/api/shifts/[id]/complete/route.ts` — POST: mark shift complete (one per member per shift)
-- `src/app/(app)/shifts/[id]/page.tsx` — shift detail: assignees, completions, "Mark complete" button
-- Update shifts list to show completion count (X/Y completed)
+- TBD
+
+## Completed Phase: 7 — Completion Tracking
+
+### What was built
+- `src/app/api/shifts/[id]/complete/route.ts` — POST: mark shift complete (one per member per shift, 409 if duplicate)
+- `src/app/(app)/shifts/[id]/page.tsx` — shift detail: title, dates, recurrence, assignees, completion history, "Mark complete" button (hidden once completed)
+- `src/app/(app)/shifts/[id]/MarkCompleteButton.tsx` — client button component
+- Updated `src/app/(app)/shifts/page.tsx` — each row links to detail page, shows X/Y completed badge
 
 ## Completed Phase: 6 — Shifts (CRUD + Recurrence Engine)
 

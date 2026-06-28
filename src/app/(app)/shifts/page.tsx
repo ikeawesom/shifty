@@ -37,6 +37,7 @@ export default async function ShiftsPage() {
       assignees: {
         include: { member: { include: { user: true } } },
       },
+      completions: { select: { id: true } },
     },
     orderBy: { startsAt: 'asc' },
   })
@@ -62,33 +63,38 @@ export default async function ShiftsPage() {
           {shifts.map((shift) => {
             const recurrenceLabel = RECURRENCE_LABEL[shift.recurrence]
             return (
-              <li key={shift.id} className="px-4 py-4 flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{shift.title}</span>
-                  {recurrenceLabel && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">
-                      {recurrenceLabel}
+              <li key={shift.id}>
+                <Link href={`/shifts/${shift.id}`} className="px-4 py-4 flex flex-col gap-1 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{shift.title}</span>
+                    {recurrenceLabel && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">
+                        {recurrenceLabel}
+                      </span>
+                    )}
+                    <span className="ml-auto text-xs text-muted-foreground">
+                      {shift.completions.length}/{shift.assignees.length} completed
                     </span>
-                  )}
-                </div>
+                  </div>
 
-                <p className="text-xs text-muted-foreground">
-                  {formatDate(shift.startsAt)} {formatTime(shift.startsAt)}
-                  {shift.endsAt && ` – ${formatDate(shift.endsAt)} ${formatTime(shift.endsAt)}`}
-                </p>
-
-                {shift.description && (
-                  <p className="text-xs text-muted-foreground">{shift.description}</p>
-                )}
-
-                {shift.assignees.length > 0 && (
                   <p className="text-xs text-muted-foreground">
-                    Assigned to:{' '}
-                    {shift.assignees
-                      .map((a) => a.member.user.name ?? a.member.user.email)
-                      .join(', ')}
+                    {formatDate(shift.startsAt)} {formatTime(shift.startsAt)}
+                    {shift.endsAt && ` – ${formatDate(shift.endsAt)} ${formatTime(shift.endsAt)}`}
                   </p>
-                )}
+
+                  {shift.description && (
+                    <p className="text-xs text-muted-foreground">{shift.description}</p>
+                  )}
+
+                  {shift.assignees.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Assigned to:{' '}
+                      {shift.assignees
+                        .map((a) => a.member.user.name ?? a.member.user.email)
+                        .join(', ')}
+                    </p>
+                  )}
+                </Link>
               </li>
             )
           })}
