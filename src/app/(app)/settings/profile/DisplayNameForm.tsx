@@ -2,7 +2,7 @@
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-export default function DisplayNameForm({ currentDisplayName }: { currentDisplayName: string | null }) {
+export default function DisplayNameForm({ currentDisplayName, fallbackName }: { currentDisplayName: string | null; fallbackName: string | null }) {
   const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
   const [saving, setSaving] = useState(false)
@@ -31,7 +31,7 @@ export default function DisplayNameForm({ currentDisplayName }: { currentDisplay
       <div className="flex gap-2">
         <input
           ref={inputRef}
-          defaultValue={currentDisplayName ?? ''}
+          defaultValue={currentDisplayName ?? fallbackName ?? ''}
           placeholder="Your name in this organisation"
           className="flex-1 border border-border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
         />

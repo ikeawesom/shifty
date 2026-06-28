@@ -21,7 +21,7 @@ export default async function ProfileSettingsPage() {
             Shown to other members in {membership.org.name}. Falls back to your account name when not set.
           </p>
         </div>
-        <DisplayNameForm currentDisplayName={membership.displayName} />
+        <DisplayNameForm currentDisplayName={membership.displayName} fallbackName={user.name} />
       </div>
     </main>
   )

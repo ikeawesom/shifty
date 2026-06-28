@@ -2,13 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, CalendarDays, Users, Bell, CreditCard, Settings2, UserCog } from 'lucide-react'
+import { LayoutDashboard, CalendarDays, Users, Bell, CreditCard, Settings2 } from 'lucide-react'
 
 const BASE_LINKS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/shifts', label: 'Shifts', icon: CalendarDays },
   { href: '/members', label: 'Members', icon: Users },
-  { href: '/settings/profile', label: 'My Profile', icon: UserCog },
+  { href: '/settings', label: 'Settings', icon: Settings2 },
 ]
 
 const LEADER_LINKS = [
@@ -16,16 +16,11 @@ const LEADER_LINKS = [
   { href: '/settings/billing', label: 'Billing', icon: CreditCard },
 ]
 
-const ADMIN_LINKS = [
-  { href: '/settings', label: 'Settings', icon: Settings2 },
-]
-
 export function SidebarNav({ isLeader, isOrgAdmin }: { isLeader: boolean; isOrgAdmin: boolean }) {
   const pathname = usePathname()
   const links = [
     ...BASE_LINKS,
     ...(isLeader ? LEADER_LINKS : []),
-    ...(isOrgAdmin ? ADMIN_LINKS : []),
   ]
 
   return (
