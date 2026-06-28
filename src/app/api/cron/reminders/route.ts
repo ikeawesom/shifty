@@ -51,20 +51,28 @@ export async function GET(req: NextRequest) {
           include: { assignees: true },
         })
 
-        const memberEmailMap = new Map(org.members.map((m) => [m.id, m.user.email]))
+        const memberMap = new Map(org.members.map((m) => [m.id, { email: m.user.email, userId: m.userId }]))
 
         for (const shift of shifts) {
           for (const assignee of shift.assignees) {
-            const email = memberEmailMap.get(assignee.memberId)
-            if (!email) continue
+            const memberInfo = memberMap.get(assignee.memberId)
+            if (!memberInfo) continue
             try {
               await sendPreShiftReminderEmail({
-                to: email,
+                to: memberInfo.email,
                 orgName: org.name,
                 shiftTitle: shift.title,
                 startsAt: shift.startsAt,
               })
               sent++
+              await prisma.notification.create({
+                data: {
+                  userId: memberInfo.userId,
+                  type: 'REMINDER_SENT',
+                  title: 'Reminder sent',
+                  body: `A pre-shift reminder was sent for ${shift.title} at ${org.name}.`,
+                },
+              }).catch(() => {})
             } catch (err) {
               console.error(`Pre-shift email error for shift ${shift.id}:`, err)
               errors++
@@ -99,6 +107,14 @@ export async function GET(req: NextRequest) {
             try {
               await sendDailySummaryEmail({ to: member.user.email, orgName: org.name, shifts: allShiftData })
               sent++
+              await prisma.notification.create({
+                data: {
+                  userId: member.userId,
+                  type: 'REMINDER_SENT',
+                  title: 'Reminder sent',
+                  body: `A shift reminder was sent to you for ${org.name}.`,
+                },
+              }).catch(() => {})
             } catch (err) {
               console.error(`Daily summary email error for member ${member.id}:`, err)
               errors++
@@ -113,6 +129,14 @@ export async function GET(req: NextRequest) {
             try {
               await sendDailySummaryEmail({ to: member.user.email, orgName: org.name, shifts: allShiftData })
               sent++
+              await prisma.notification.create({
+                data: {
+                  userId: member.userId,
+                  type: 'REMINDER_SENT',
+                  title: 'Reminder sent',
+                  body: `A shift reminder was sent to you for ${org.name}.`,
+                },
+              }).catch(() => {})
             } catch (err) {
               console.error(`Assignee daily summary error for member ${member.id}:`, err)
               errors++
@@ -131,6 +155,14 @@ export async function GET(req: NextRequest) {
                 shifts: myShifts.map((s) => ({ title: s.title, startsAt: s.startsAt, endsAt: s.endsAt })),
               })
               sent++
+              await prisma.notification.create({
+                data: {
+                  userId: member.userId,
+                  type: 'REMINDER_SENT',
+                  title: 'Reminder sent',
+                  body: `A shift reminder was sent to you for ${org.name}.`,
+                },
+              }).catch(() => {})
             } catch (err) {
               console.error(`Personal shift summary error for member ${member.id}:`, err)
               errors++
