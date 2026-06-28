@@ -44,12 +44,16 @@
 - **Display Name Plan** (8 commits) ✅
   - `prisma/schema.prisma` + migration `20260628152731_add_org_member_display_name` — `displayName String?` on `OrgMember`
   - `PATCH /api/org-member/display-name` — update org-scoped display name
-  - `src/app/(app)/settings/profile/page.tsx` + `DisplayNameForm.tsx` — profile settings page for all members
-  - `src/components/app/SidebarNav.tsx` — "My Profile" link (`UserCog`) for all members
+  - `src/app/(app)/settings/profile/page.tsx` + `DisplayNameForm.tsx` — profile settings page (exists but nav link removed)
   - `src/components/app/ProfileModal.tsx` — heading renamed "Display Name" → "Name" + sub-label
   - `src/app/api/search/route.ts` — scoped to `activeOrg.orgId`, filters by `displayName`, admin-only `realName` in response
   - `src/components/app/GlobalSearch.tsx` — updated `MemberResult` type + member row
   - `src/app/(app)/members/page.tsx` — `displayName ?? user.name ?? user.email` fallback
+- **Post-session fixes** ✅
+  - `npx prisma generate` — Prisma client regenerated after `displayName` migration (was causing 500 on `/api/search`)
+  - `src/app/(app)/settings/page.tsx` — Display Name card added for all members; admin-only redirect lifted; Org + Danger Zone now conditionally rendered for admins only
+  - `src/app/(app)/settings/profile/DisplayNameForm.tsx` — accepts `fallbackName` prop; input defaults to `user.name` when `displayName` is null
+  - `src/components/app/SidebarNav.tsx` — "Settings" moved to `BASE_LINKS` (all members); "My Profile" link + `ADMIN_LINKS` removed; `UserCog` import dropped
 
 ### Still to do
 
