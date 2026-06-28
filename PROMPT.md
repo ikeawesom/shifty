@@ -3,7 +3,7 @@
 We are building **Shifty**, a shift and task delegation management SaaS platform.
 
 ## Current status
-**Phase 7 (Completion Tracking) is complete. Starting Phase 8: Dashboards.**
+**Phase 8 (Dashboards) is complete. Starting Phase 9: Multi-Org.**
 
 ## What was built so far
 - Next.js 16 App Router + TypeScript + Tailwind CSS + shadcn/ui scaffolded and building cleanly
@@ -43,6 +43,7 @@ We are building **Shifty**, a shift and task delegation management SaaS platform
 - `src/app/api/shifts/[id]/complete/route.ts` — POST: any org member marks shift complete; one per member per shift (409 if duplicate); optional notes
 - `src/app/(app)/shifts/[id]/page.tsx` — shift detail: title, dates, recurrence, assignees, completion history, "Mark complete" button
 - `src/app/(app)/shifts/[id]/MarkCompleteButton.tsx` — client button for marking complete
+- `src/app/(app)/dashboard/page.tsx` — rich dashboard: role-branched stat cards (ADMIN: org totals + completion rate; MEMBER: personal stats), upcoming shifts list, recent activity feed
 
 ## Tech stack
 - Next.js 16 App Router + TypeScript
@@ -66,10 +67,10 @@ We are building **Shifty**, a shift and task delegation management SaaS platform
 | Pro | 8 | 50 | 10 | Yes |
 | Enterprise | ∞ | ∞ | ∞ | Yes |
 
-## Phase 8 — What to build
+## Phase 9 — What to build
 
 ### What Claude will build
-TBD — dashboards showing shift completion stats, member activity, and org-level summaries.
+TBD — multi-org support: allow Org Leaders to create and switch between multiple organizations, enforcing per-plan org limits.
 
 ## Working agreement
 - Build **phase by phase** — confirm each phase works before starting the next

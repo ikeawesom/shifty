@@ -11,16 +11,21 @@
 | 5 | Members + Invite Flow | ✅ Done |
 | 6 | Shifts (CRUD + recurrence engine) | ✅ Done |
 | 7 | Completion Tracking | ✅ Done |
-| 8 | Dashboards | ⏳ Next |
-| 9 | Multi-Org | — |
+| 8 | Dashboards | ✅ Done |
+| 9 | Multi-Org | ⏳ Next |
 | 10 | Email Reminders (cron) | — |
 | 11 | Marketing Pages | — |
 | 12 | Polish + Deploy | — |
 
-## Current Phase: 8 — Dashboards
+## Current Phase: 9 — Multi-Org
 
 ### What to build
 - TBD
+
+## Completed Phase: 8 — Dashboards
+
+### What was built
+- Updated `src/app/(app)/dashboard/page.tsx` — role-branched stat cards (ADMIN: total shifts, members, org completion rate; MEMBER: my shifts, my completions, my completion rate), "My Upcoming Shifts" list (next 5 assigned + not yet completed), "Recent Activity" feed (last 10 completions across org)
 
 ## Completed Phase: 7 — Completion Tracking
 

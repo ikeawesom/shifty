@@ -1,6 +1,36 @@
 # Shifty — Handover
 
-## Last completed: Phase 7 — Completion Tracking
+## Last completed: Phase 8 — Dashboards
+
+### What was done
+
+- Replaced the barebones `/dashboard` page with a full dashboard in `src/app/(app)/dashboard/page.tsx`:
+  - **Stat cards** (role-branched, 3 DB counts run in parallel):
+    - ADMIN: Total Shifts, Members, Org Completion Rate (totalCompletions / totalAssignees × 100%)
+    - MEMBER: My Shifts, Completed, My Completion Rate
+    - Zero-division guard: shows `0%` when denominator is 0
+  - **My Upcoming Shifts**: ShiftAssignee rows where `memberId = membership.id`, shift starts in the future, and no ShiftCompletion exists for that member on that shift — uses Prisma `none` relation filter; sorted by `startsAt asc`; limited to 5
+  - **Recent Activity**: last 10 ShiftCompletion rows for the org, includes `completedBy.user` for display name and `shift.title`; sorted by `completedAt desc`
+  - Stat cards and upcoming+activity each run in a `Promise.all` — 3 total DB round-trips
+  - All empty states handled with descriptive text
+  - Nav links and LogoutLink preserved; Billing link still gated to `isLeader`
+
+### Key files
+
+- `src/app/(app)/dashboard/page.tsx` — only file changed
+
+### Data flow
+
+1. `syncUser()` → findFirst OrgMember (with org) → redirect if none
+2. Role-branched `Promise.all` for stat counts
+3. Parallel `Promise.all` for upcoming shifts + recent completions
+4. Server-rendered; no client components added
+
+---
+
+## Previous phases
+
+### Phase 7 — Completion Tracking
 
 ### What was done
 
