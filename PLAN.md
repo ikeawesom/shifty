@@ -23,19 +23,22 @@
 
 - **Theme**: Purple primary (`oklch(0.548 0.241 286.7)`), ring + sidebar updated, font bug fixed (`globals.css`)
 - **Smooth scroll**: `scroll-behavior: smooth` added to `html` in `globals.css`
-- **Shared nav**: `src/components/marketing/MarketingHeader.tsx` — glass h-16 nav, Zap logo, "Features" + "Pricing" hash links on right beside auth buttons
-- **Shared footer**: `src/components/marketing/MarketingFooter.tsx` — Pricing link updated to `/#pricing`
+- **Shared nav** (`src/components/marketing/MarketingHeader.tsx`): client component; IntersectionObserver highlights active "Features"/"Pricing" nav link; logo click smooth-scrolls to top
+- **Shared footer** (`src/components/marketing/MarketingFooter.tsx`): Pricing link updated to `/#pricing`
 - **Marketing layout**: `src/app/(marketing)/layout.tsx` uses shared header/footer
-- **Landing page** (`src/app/page.tsx`) — full Stitch-inspired overhaul:
-  - Hero: blob decorations, primary-colored headline, rounded-full CTAs
-  - How It Works: numbered step badges on icon squares
-  - Features section (`id="features"`): bento 12-col grid — Shift Scheduling (8-col with mock shift list), Instant Alerts (4-col purple card), Team Invites (4-col with member mockup), Multi-Org (8-col with org switcher mockup)
-  - Pricing section (`id="pricing"`): full 4-card pricing (Free $0, Starter $9/mo, Pro $29/mo, Enterprise Custom) + comparison table — replaces old lightweight preview
-  - CTA Banner: dark navy `#1a1b2e` with purple/violet glow blobs + two-button layout
-  - Background `#faf8ff` tint for features section
-- **Standalone `/pricing` page deleted** — content now fully inlined on landing page
-- **App layout** (`src/app/(app)/layout.tsx`): Zap icon + purple logo, h-14, sticky glass nav
-- **Dashboard** (`src/app/(app)/dashboard/page.tsx`): stat cards with icon badges (CalendarDays, Users, TrendingUp/CheckCircle2), section headers with icons, empty states with dashed borders, activity list with green completion icons
+- **Landing page** (`src/app/page.tsx`): full Stitch-inspired overhaul; comparison table removed; features bento grid + inline pricing section
+- **Standalone `/pricing` page deleted** — content fully inlined on landing page
+- **App layout** (`src/app/(app)/layout.tsx`): mobile-responsive — desktop fixed `w-64` sidebar (`hidden md:flex`), mobile hamburger header → `MobileSidebar.tsx` (Sheet at 80vw); `md:ml-64 mt-14 md:mt-0` main content offset
+- **`src/components/app/SidebarNav.tsx`**: `isOrgAdmin` prop, Settings2 link for admins, active link fix for `/settings` exact match
+- **Dashboard admin view redesign** (`src/app/(app)/dashboard/page.tsx`): sticky admin bar (`hidden md:flex`), greeting, 4 stat cards, bento grid. Bar now uses `<GlobalSearch />` + `<NotificationBell userId={user.id} />`
+- **Notification system**: `Notification` Prisma model + `NotificationType` enum; migration `20260628141429_add_notifications` applied; `GET/PATCH /api/notifications`; `GET /api/search`; triggers in invitations + cron reminders routes
+- **`src/components/app/NotificationBell.tsx`**: bell with unread badge, fade/grow popup, mark-all-read on open
+- **`src/components/app/GlobalSearch.tsx`**: debounced 300ms, dropdown shows Shifts with org subtitle, navigates on click
+- **`src/components/app/MobileSidebar.tsx`**: Sheet-based hamburger drawer mirroring desktop sidebar
+- **`src/components/app/ProfileMenu.tsx`**: replaces LogoutLink; shows avatar initial + name/email; popup with My Profile + Sign Out
+- **`src/components/app/ProfileModal.tsx`**: Dialog; 4 sections (name edit, email readonly, password reset, delete account)
+- **Settings page** (`src/app/(app)/settings/page.tsx`): org admin only; `OrgSettingsForm.tsx` + `DeleteOrgButton.tsx` (type-to-confirm); `PATCH/DELETE /api/orgs/[id]`
+- **User API routes**: `PATCH /api/user/profile`, `POST /api/user/password-reset`, `DELETE /api/user/account`
 
 ### Still to do
 
@@ -64,6 +67,8 @@
 | `SMTP_USERNAME` | Gmail address |
 | `SMTP_PASSWORD` | Gmail app password |
 | `CRON_SECRET` | Auto-injected by Vercel Cron |
+| `KINDE_M2M_CLIENT_ID` | Kinde M2M app (for user management API) |
+| `KINDE_M2M_CLIENT_SECRET` | Kinde M2M app (for user management API) |
 
 ---
 

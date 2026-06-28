@@ -2,77 +2,51 @@
 
 ## Last worked on: Phase 12 — Polish + Deploy (in progress)
 
-### What was done this session
+### What was done THIS session
 
-#### Landing page + dashboard visual polish (Phase 12 continued)
+#### Plan 1 — Admin Bar Modifications ✅
+- Prisma `Notification` model + `NotificationType` enum added to schema; migration `20260628141429_add_notifications` applied to Supabase
+- `src/components/app/NotificationBell.tsx` — bell icon with red unread badge; fade/grow popup anchored top-right; fetches `GET /api/notifications` on mount; `PATCH /api/notifications` marks all read on open
+- `src/components/app/GlobalSearch.tsx` — debounced 300ms input; `GET /api/search?q=...` returns Shifts across user's orgs with org name subtitle; dropdown navigates on click
+- `src/app/api/notifications/route.ts` — GET (last 20, newest first) + PATCH (mark all read)
+- `src/app/api/search/route.ts` — GET searches shifts by title across user's orgs
+- `src/app/api/invitations/route.ts` — creates `INVITED_TO_ORG` notification for existing users on invite
+- `src/app/api/invitations/[token]/route.ts` — creates `MEMBER_JOINED` notification for org owner on accept
+- `src/app/api/cron/reminders/route.ts` — creates `REMINDER_SENT` notification after each reminder email
+- `src/app/(app)/dashboard/page.tsx` — static search + bell replaced with `<GlobalSearch />` + `<NotificationBell userId={user.id} />`; admin bar now `hidden md:flex`
 
-**Stitch MCP design reference pulled:**
-- Project ID: `6411137485162927669` — retrieved HTML/CSS for 4 screens: Landing, Features, Pricing, Logo
-- Design system: Inter font, primary `#630ed4` / surface `#faf8ff`, rounded-full buttons, bento grid layouts, glass nav
-
-**`src/app/globals.css`:**
-- Added `scroll-behavior: smooth` to `html` element for hash-link smooth scrolling
-
-**`src/components/marketing/MarketingHeader.tsx`:**
-- Nav links ("Features", "Pricing") moved to the right side beside auth buttons
-- Links are `<a href="#features">` / `<a href="#pricing">` hash anchors (not Next.js `<Link>`)
-- Thin divider separates nav links from auth buttons
-- "Get started" button is now `rounded-full`; header is `h-16` with `max-w-7xl` constraint
-
-**`src/components/marketing/MarketingFooter.tsx`:**
-- "Pricing" link updated from `href="/pricing"` → `href="/#pricing"` (deep-links to landing section)
-
-**`src/app/page.tsx`** — full Stitch-inspired overhaul:
-- **Hero**: decorative purple/violet blob blobs (absolute positioned), "Run your team." in `text-primary`, `rounded-full` CTAs
-- **How It Works**: numbered step badges (1/2/3) overlaid on icon squares
-- **Features section** (`id="features"`): bento 12-col grid replacing old 4-col card grid:
-  - 8-col: Shift Scheduling card with a mock shift list UI on the right half
-  - 4-col: Instant Alerts in solid `bg-primary` with pill tags
-  - 4-col: Team Invites with member status mockup (Active/Pending)
-  - 8-col: Multi-Org Management with org switcher mockup
-  - Features section background: `#faf8ff` tinted surface
-- **Pricing section** (`id="pricing"`): replaces old lightweight preview — full 4-card grid + comparison table:
-  - Free: $0, Starter: $9/mo, Pro: $29/mo (Most Popular), Enterprise: Custom
-  - `rounded-full` CTA buttons; Pro card has `border-2 border-primary shadow-md`
-  - Comparison table: Organizations, Members/org, Assignees/shift, Email reminders
-- **CTA Banner**: dark navy `#1a1b2e` background with purple + violet glow blobs; two-button layout (Get started + Sign in)
-
-**`src/app/(marketing)/pricing/page.tsx`** — **deleted**
-- Standalone `/pricing` route removed; all content now inlined on landing page with smooth scroll
-
-**`src/app/(app)/layout.tsx`:**
-- Logo now shows `<Zap>` icon + "Shifty" in `text-primary`
-- Nav is `h-14` with `sticky top-0 z-40` + glass backdrop blur
-
-**`src/app/(app)/dashboard/page.tsx`:**
-- Stat cards: each has a colored icon badge (CalendarDays, Users, TrendingUp / CheckCircle2 for members)
-- `LucideIcon` typed `icon` field added to stats array
-- Section headers (`My Upcoming Shifts`, `Recent Activity`) have small icon indicators
-- Empty states: dashed border rounded containers with centered text
-- Upcoming shift list items: icon badge + title that changes to `text-primary` on hover
-- Activity list items: green `bg-green-50` / `text-green-600` icon per completion
+#### Plan 2 — Environment Modifications ✅
+- `src/app/(app)/layout.tsx` — desktop sidebar `hidden md:flex`; mobile fixed header (h-14, z-50) with `<MobileSidebar>`; main content `md:ml-64 mt-14 md:mt-0`; `isOrgAdmin` derived from `activeMembership?.role === OrgRole.ADMIN`; `LogoutLink` replaced with `<ProfileMenu>`
+- `src/components/app/SidebarNav.tsx` — added `isOrgAdmin: boolean` prop; Settings2 link for admins; Settings active state is exact-match only (avoids false positives with `/settings/billing` + `/settings/reminders`)
+- `src/components/app/MobileSidebar.tsx` — Sheet-based hamburger drawer; mirrors desktop sidebar (SidebarNav + OrgSwitcher + ProfileMenu)
+- `src/components/app/ProfileMenu.tsx` — avatar initial button; popup above (fade/grow, bottom-left anchor); "My Profile" → opens ProfileModal; "Sign Out" → LogoutLink
+- `src/components/app/ProfileModal.tsx` — Dialog; 4 sections: Display Name (PATCH `/api/user/profile`), Email (read-only), Password Reset (POST `/api/user/password-reset`), Delete Account (DELETE `/api/user/account`)
+- `src/app/(app)/settings/page.tsx` — server, ADMIN-only guard; OrgSettingsForm + DeleteOrgButton
+- `src/app/(app)/settings/OrgSettingsForm.tsx` — PATCH org name via `/api/orgs/[id]`, calls `router.refresh()`
+- `src/app/(app)/settings/DeleteOrgButton.tsx` — type-org-name-to-confirm deletion; DELETE `/api/orgs/[id]`; redirects to dashboard
+- `src/app/api/orgs/[id]/route.ts` — PATCH (rename, owner-only) + DELETE (delete org + clear active-org cookie, owner-only)
+- `src/app/api/user/profile/route.ts` — PATCH display name
+- `src/app/api/user/password-reset/route.ts` — POST stub (returns ok)
+- `src/app/api/user/account/route.ts` — DELETE user (cascades via Prisma) + returns Kinde logout URL
 
 ---
 
-### What's still remaining in Phase 12
+### What's immediately next (Phase 12 — remaining)
 
-- **Error pages**: `src/app/not-found.tsx`, `src/app/error.tsx`
-- **Loading states**: `src/app/(app)/dashboard/loading.tsx`, `src/app/(app)/shifts/loading.tsx` (shadcn/ui Skeleton)
-- **SEO**: metadata + Open Graph in `src/app/layout.tsx` and marketing pages
-- **Env var audit** — all secrets documented in PLAN.md
-- **Vercel deployment**
+1. **Error pages**
+   - `src/app/not-found.tsx` — 404 page with "Go home" link
+   - `src/app/error.tsx` — error boundary with retry button
 
----
+2. **Loading states** (`loading.tsx` files using shadcn/ui `Skeleton`)
+   - `src/app/(app)/dashboard/loading.tsx`
+   - `src/app/(app)/shifts/loading.tsx`
+   - `src/app/(app)/members/loading.tsx`
 
-## Previous: Phase 11 — Marketing Pages + initial Phase 12 polish
+3. **SEO** — `metadata` export in `src/app/layout.tsx`, landing page, and marketing pages (title, description, Open Graph)
 
-### What was done
-- Created shared `MarketingHeader` + `MarketingFooter` components
-- `src/app/(marketing)/layout.tsx` uses shared components
-- `src/app/(marketing)/pricing/page.tsx` — original full pricing page (now deleted; content inlined)
-- `src/app/page.tsx` — initial landing page with 6 sections + animations
-- Purple theme (`oklch(0.548 0.241 286.7)`) applied in `globals.css`
-- Geist font circular variable bug fixed
+4. **Env var audit** — all secrets documented in PLAN.md; confirm all are set in Vercel before deploy
+
+5. **Vercel deployment** — push to GitHub, connect Vercel, add env vars, deploy
 
 ---
 
