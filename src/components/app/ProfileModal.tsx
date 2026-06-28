@@ -76,7 +76,8 @@ export default function ProfileModal({
         <div className="space-y-6 mt-2">
           {/* Display Name */}
           <section>
-            <h3 className="text-sm font-semibold mb-3">Display Name</h3>
+            <h3 className="text-sm font-semibold mb-1">Name</h3>
+            <p className="text-xs text-muted-foreground mb-3">Your global account name across all organisations.</p>
             <div className="flex gap-2">
               <input
                 ref={nameRef}
