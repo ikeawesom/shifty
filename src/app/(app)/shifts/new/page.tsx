@@ -3,14 +3,12 @@ import prisma from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import { OrgRole } from '@prisma/client'
 import ShiftForm from './ShiftForm'
+import { getActiveOrg } from '@/lib/org'
 
 export default async function NewShiftPage() {
   const user = await syncUser()
 
-  const membership = await prisma.orgMember.findFirst({
-    where: { userId: user.id },
-    include: { org: true },
-  })
+  const membership = await getActiveOrg(user.id)
 
   if (!membership) redirect('/org/new')
   if (membership.role !== OrgRole.ADMIN) redirect('/shifts')

@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import { OrgRole, Recurrence } from '@prisma/client'
 import Link from 'next/link'
+import { getActiveOrg } from '@/lib/org'
 
 const RECURRENCE_LABEL: Record<Recurrence, string | null> = {
   ONE_OFF: null,
@@ -22,10 +23,7 @@ function formatTime(d: Date) {
 export default async function ShiftsPage() {
   const user = await syncUser()
 
-  const membership = await prisma.orgMember.findFirst({
-    where: { userId: user.id },
-    include: { org: true },
-  })
+  const membership = await getActiveOrg(user.id)
 
   if (!membership) redirect('/org/new')
 

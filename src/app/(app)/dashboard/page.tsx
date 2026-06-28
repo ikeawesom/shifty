@@ -1,10 +1,10 @@
 import { syncUser } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import prisma from '@/lib/prisma'
-import { LogoutLink } from '@kinde-oss/kinde-auth-nextjs/server'
 import Link from 'next/link'
-import { OrgRole, PlatformRole } from '@prisma/client'
+import { OrgRole } from '@prisma/client'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { getActiveOrg } from '@/lib/org'
 
 function formatDate(d: Date) {
   return d.toLocaleDateString(undefined, { dateStyle: 'medium' })
@@ -17,15 +17,11 @@ function formatTime(d: Date) {
 export default async function DashboardPage() {
   const user = await syncUser()
 
-  const membership = await prisma.orgMember.findFirst({
-    where: { userId: user.id },
-    include: { org: true },
-  })
+  const membership = await getActiveOrg(user.id)
 
   if (!membership) redirect('/org/new')
 
   const isAdmin = membership.role === OrgRole.ADMIN
-  const isLeader = user.platformRole === PlatformRole.ORG_LEADER
   const orgId = membership.orgId
   const now = new Date()
 
@@ -84,12 +80,7 @@ export default async function DashboardPage() {
 
   return (
     <main className="flex flex-col flex-1 gap-8 p-8 max-w-4xl">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <LogoutLink className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-          Sign out
-        </LogoutLink>
-      </div>
+      <h1 className="text-2xl font-semibold">Dashboard</h1>
 
       <p className="text-muted-foreground -mt-4">
         Welcome back{user.name ? `, ${user.name}` : ''}. You&apos;re in{' '}
@@ -166,19 +157,6 @@ export default async function DashboardPage() {
         </section>
       </div>
 
-      <nav className="flex items-center gap-4 pt-2 border-t">
-        <Link href="/shifts" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-          Shifts
-        </Link>
-        <Link href="/members" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-          Members
-        </Link>
-        {isLeader && (
-          <Link href="/settings/billing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Billing
-          </Link>
-        )}
-      </nav>
     </main>
   )
 }

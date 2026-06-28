@@ -1,40 +1,42 @@
-'use server'
-
 import { syncUser } from '@/lib/auth'
-import { redirect } from 'next/navigation'
 import prisma from '@/lib/prisma'
-import { OrgRole } from '@prisma/client'
+import { PLAN_ORG_LIMITS } from '@/lib/plans'
+import Link from 'next/link'
 import OrgCreateForm from './OrgCreateForm'
 
-async function createOrg(formData: FormData) {
-  'use server'
-
+export default async function NewOrgPage() {
   const user = await syncUser()
-  const name = (formData.get('name') as string | null)?.trim()
 
-  if (!name || name.length < 2) return
-
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-
-  const uniqueSlug = `${slug}-${Date.now().toString(36)}`
-
-  await prisma.$transaction(async (tx) => {
-    const org = await tx.organization.create({
-      data: { name, slug: uniqueSlug, ownerId: user.id },
-    })
-    await tx.orgMember.create({
-      data: { userId: user.id, orgId: org.id, role: OrgRole.ADMIN },
-    })
+  const ownedOrgCount = await prisma.organization.count({
+    where: { ownerId: user.id },
   })
 
-  redirect('/dashboard')
-}
+  const limit = PLAN_ORG_LIMITS[user.plan]
+  const atLimit = ownedOrgCount >= limit
 
-export default async function NewOrgPage() {
-  await syncUser()
+  if (atLimit) {
+    return (
+      <main className="flex flex-col items-center justify-center flex-1 gap-8 p-8">
+        <div className="w-full max-w-md space-y-4 rounded-lg border p-6">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold">Organisation limit reached</h1>
+            <p className="text-muted-foreground text-sm">
+              Your <span className="font-medium">{user.plan}</span> plan allows up to{' '}
+              <span className="font-medium">{limit === Infinity ? 'unlimited' : limit}</span>{' '}
+              owned organisation{limit === 1 ? '' : 's'}. You currently own{' '}
+              <span className="font-medium">{ownedOrgCount}</span>.
+            </p>
+          </div>
+          <Link
+            href="/settings/billing"
+            className="inline-flex w-full items-center justify-center rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            Manage billing →
+          </Link>
+        </div>
+      </main>
+    )
+  }
 
   return (
     <main className="flex flex-col items-center justify-center flex-1 gap-8 p-8">
@@ -45,7 +47,7 @@ export default async function NewOrgPage() {
             You can add members and create shifts after setup.
           </p>
         </div>
-        <OrgCreateForm action={createOrg} />
+        <OrgCreateForm />
       </div>
     </main>
   )

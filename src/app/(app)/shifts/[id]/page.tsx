@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { Recurrence } from '@prisma/client'
 import Link from 'next/link'
 import MarkCompleteButton from './MarkCompleteButton'
+import { getActiveOrg } from '@/lib/org'
 
 type Params = Promise<{ id: string }>
 
@@ -26,9 +27,7 @@ export default async function ShiftDetailPage({ params }: { params: Params }) {
   const { id } = await params
   const user = await syncUser()
 
-  const membership = await prisma.orgMember.findFirst({
-    where: { userId: user.id },
-  })
+  const membership = await getActiveOrg(user.id)
 
   if (!membership) redirect('/org/new')
 

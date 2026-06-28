@@ -1,5 +1,6 @@
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
 import { redirect } from 'next/navigation'
+import { cache } from 'react'
 import prisma from '@/lib/prisma'
 import { PlatformRole } from '@prisma/client'
 
@@ -15,7 +16,7 @@ export async function requireUser() {
   return user
 }
 
-export async function syncUser() {
+export const syncUser = cache(async function syncUser() {
   const kindeUser = await requireUser()
 
   if (!kindeUser.email) throw new Error('Kinde user has no email')
@@ -34,4 +35,4 @@ export async function syncUser() {
       platformRole: PlatformRole.ORG_LEADER,
     },
   })
-}
+})
