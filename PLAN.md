@@ -14,16 +14,10 @@
 | 8 | Dashboards | ✅ Done |
 | 9 | Multi-Org | ✅ Done |
 | 10 | Email Reminders (cron) | ✅ Done |
-| 11 | Marketing Pages | ⏳ Next |
+| 11 | Marketing Pages | ✅ Done |
 | 12 | Polish + Deploy | — |
 
-## Current Phase: 11 — Marketing Pages
-
-### What to build
-- `src/app/page.tsx` — full landing page: hero, feature highlights, pricing preview, CTA
-- `/features`, `/pricing` static pages (or sections on the landing page)
-- Responsive layout with consistent nav + footer
-- No auth required; links to sign in / register
+## Current Phase: 12 — Polish + Deploy
 
 ## Completed Phase: 10 — Email Reminders (cron)
 

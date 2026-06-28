@@ -3,7 +3,7 @@
 We are building **Shifty**, a shift and task delegation management SaaS platform.
 
 ## Current status
-**Phase 10 (Configurable Email Reminders) is complete. Starting Phase 11: Marketing Pages.**
+**Phase 11 (Marketing Pages) is complete. Starting Phase 12: Polish + Deploy.**
 
 ## What was built so far
 - Next.js 16 App Router + TypeScript + Tailwind CSS + shadcn/ui scaffolded and building cleanly
@@ -51,6 +51,9 @@ We are building **Shifty**, a shift and task delegation management SaaS platform
 - `src/components/org/ReminderSettingsForm.tsx` — client form: reminder type radio (filtered by plan), UTC hour picker, lead-time input
 - `src/app/(app)/settings/reminders/page.tsx` — reminder settings page (org leaders / owners only)
 - `src/app/api/cron/reminders/route.ts` — hourly cron handler: `CRON_SECRET` auth, routes per ReminderType, plan-gates before send
+- `src/app/page.tsx` — full landing page: hero, 4-feature card grid, pricing preview teaser, footer; redirects authenticated users to dashboard
+- `src/app/(marketing)/layout.tsx` — marketing shell: nav (logo, Pricing, LoginLink, RegisterLink) + footer; no auth required
+- `src/app/(marketing)/pricing/page.tsx` — pricing comparison table (Free/Starter/Pro/Enterprise); values from `src/lib/plans.ts`; statically prerendered
 
 ## Tech stack
 - Next.js 16 App Router + TypeScript
@@ -74,25 +77,18 @@ We are building **Shifty**, a shift and task delegation management SaaS platform
 | Pro | 8 | 50 | 10 | + Daily summary (assigned only), Personal shift summary |
 | Enterprise | ∞ | ∞ | ∞ | + Pre-shift alert |
 
-## Phase 11 — What to build
+## Phase 12 — What to build
 
 ### What Claude will build
 
-Marketing pages: a polished public-facing site for Shifty. These are static/server-rendered pages requiring no auth.
+Polish + Deploy: final production-readiness pass before going live on Vercel.
 
-#### What to build
-1. **`src/app/page.tsx`** — full landing page replacing the current stub:
-   - Hero section: headline, subheadline, sign in / register CTAs
-   - Features section: 3–4 feature highlights (shift management, team invites, reminders, multi-org)
-   - Pricing preview: tier table (Free / Starter / Pro / Enterprise) linking to `/pricing`
-   - Footer with nav links
-2. **`src/app/(marketing)/pricing/page.tsx`** — full pricing page with tier comparison table
-3. **`src/app/(marketing)/layout.tsx`** — marketing shell: simple nav (logo, "Sign in", "Get started") + footer; no auth required
-
-#### Design notes
-- Use existing shadcn/ui components (Card, Badge, Button)
-- Keep Tailwind-only styling; no new dependencies
-- All CTAs point to Kinde sign-in / register URLs (use `LoginLink` / `RegisterLink` from `@kinde-oss/kinde-auth-nextjs/components`)
+#### What to build (TBD — confirm with user before starting)
+- Error pages: `src/app/not-found.tsx`, `src/app/error.tsx`
+- Loading states: `loading.tsx` skeletons for slow pages (dashboard, shifts)
+- SEO: `src/app/layout.tsx` metadata, Open Graph tags on landing/pricing
+- Environment variable audit: ensure all secrets are documented for Vercel
+- Vercel deploy checklist: `DATABASE_URL`, `KINDE_*`, `STRIPE_*`, `EMAIL_*`, `CRON_SECRET`
 
 ## Working agreement
 - Build **phase by phase** — confirm each phase works before starting the next

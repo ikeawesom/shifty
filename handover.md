@@ -1,6 +1,24 @@
 # Shifty — Handover
 
-## Last completed: Phase 10 — Configurable Email Reminders
+## Last completed: Phase 11 — Marketing Pages
+
+### What was done
+
+- Created `src/app/(marketing)/layout.tsx` — marketing shell: sticky nav (Shifty logo, Pricing link, LoginLink "Sign in", RegisterLink "Get started") + footer; no auth required; shared by all `(marketing)` routes
+- Created `src/app/(marketing)/pricing/page.tsx` — full pricing comparison table (Free / Starter / Pro / Enterprise) using shadcn/ui `Table`; values pulled live from `PLAN_ORG_LIMITS`, `PLAN_MEMBER_LIMITS`, `PLAN_ASSIGNEE_LIMITS` in `src/lib/plans.ts`; per-tier `RegisterLink` CTAs; statically prerendered (`○`)
+- Replaced `src/app/page.tsx` stub with full landing page: inline nav, hero section, 4-feature card grid, pricing preview teaser (4 tier cards + "See full pricing →" link), footer; retains `getUser()` redirect to `/dashboard` for authenticated users
+- All Kinde CTAs use `LoginLink`/`RegisterLink` from `@kinde-oss/kinde-auth-nextjs/components`
+- Build passes cleanly — 19 routes, zero TypeScript errors
+
+### Key files
+
+- `src/app/page.tsx` — full landing page (replaces stub)
+- `src/app/(marketing)/layout.tsx` — marketing shell (new)
+- `src/app/(marketing)/pricing/page.tsx` — pricing comparison page (new)
+
+---
+
+## Previous: Phase 10 — Configurable Email Reminders
 
 ### What was done
 
