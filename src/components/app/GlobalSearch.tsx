@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Search } from 'lucide-react'
 
 type ShiftResult = {
@@ -11,9 +12,17 @@ type ShiftResult = {
   startsAt: string
 }
 
+type MemberResult = {
+  id: string
+  name: string | null
+  email: string
+  role: string
+}
+
 export default function GlobalSearch() {
+  const router = useRouter()
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<{ shifts: ShiftResult[] }>({ shifts: [] })
+  const [results, setResults] = useState<{ shifts: ShiftResult[]; members: MemberResult[] }>({ shifts: [], members: [] })
   const [open, setOpen] = useState(false)
   const [focused, setFocused] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -34,7 +43,7 @@ export default function GlobalSearch() {
 
   const search = useCallback((q: string) => {
     if (q.length < 2) {
-      setResults({ shifts: [] })
+      setResults({ shifts: [], members: [] })
       setOpen(false)
       return
     }
@@ -58,11 +67,13 @@ export default function GlobalSearch() {
     setOpen(false)
     setFocused(false)
     setQuery('')
-    setResults({ shifts: [] })
+    setResults({ shifts: [], members: [] })
   }
 
+  const noResults = results.shifts.length === 0 && results.members.length === 0
+
   return (
-    <div ref={ref} className="relative flex-1 max-w-sm">
+    <div ref={ref} className="relative flex-1 w-full">
       <div
         className="flex items-center gap-2 bg-muted/60 rounded-full px-4 py-2 cursor-text"
         onClick={() => { setFocused(true); setTimeout(() => inputRef.current?.focus(), 0) }}
@@ -73,7 +84,7 @@ export default function GlobalSearch() {
             ref={inputRef}
             value={query}
             onChange={handleChange}
-            placeholder="Search shifts..."
+            placeholder="Search shifts, members..."
             className="text-sm bg-transparent outline-none flex-1 placeholder:text-muted-foreground"
             autoFocus
           />
@@ -84,7 +95,7 @@ export default function GlobalSearch() {
 
       {open && (
         <div className="absolute left-0 top-12 z-50 w-full bg-white border border-border rounded-2xl shadow-lg overflow-hidden">
-          {results.shifts.length > 0 ? (
+          {results.shifts.length > 0 && (
             <>
               <p className="px-4 pt-3 pb-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
                 Shifts
@@ -104,7 +115,30 @@ export default function GlobalSearch() {
                 ))}
               </ul>
             </>
-          ) : (
+          )}
+
+          {results.members.length > 0 && (
+            <>
+              <p className="px-4 pt-3 pb-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+                Members
+              </p>
+              <ul>
+                {results.members.map((m) => (
+                  <li key={m.id}>
+                    <button
+                      onClick={() => { router.push('/members'); close() }}
+                      className="w-full flex flex-col px-4 py-2.5 hover:bg-muted/40 transition-colors text-left"
+                    >
+                      <span className="text-sm font-medium">{m.name ?? m.email}</span>
+                      <span className="text-xs text-muted-foreground">{m.email}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {noResults && (
             <p className="text-sm text-muted-foreground text-center py-6">No results for &ldquo;{query}&rdquo;</p>
           )}
         </div>
