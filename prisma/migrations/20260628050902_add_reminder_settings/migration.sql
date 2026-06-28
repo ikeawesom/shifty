@@ -1,0 +1,7 @@
+-- CreateEnum
+CREATE TYPE "ReminderType" AS ENUM ('NONE', 'ALL_DAILY_SUMMARY', 'ASSIGNEE_DAILY_SUMMARY', 'ASSIGNEE_OWN_SHIFT', 'ASSIGNEE_PRE_SHIFT');
+
+-- AlterTable
+ALTER TABLE "Organization" ADD COLUMN     "reminderHourUtc" INTEGER NOT NULL DEFAULT 7,
+ADD COLUMN     "reminderLeadMinutes" INTEGER NOT NULL DEFAULT 60,
+ADD COLUMN     "reminderType" "ReminderType" NOT NULL DEFAULT 'NONE';
