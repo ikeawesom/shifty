@@ -1,6 +1,89 @@
 # Shifty — Handover
 
-## Last completed: Phase 8 — Dashboards
+## Last completed: Phase 10 — Configurable Email Reminders
+
+### What was done
+
+- Added `ReminderType` enum to `prisma/schema.prisma`: `NONE | ALL_DAILY_SUMMARY | ASSIGNEE_DAILY_SUMMARY | ASSIGNEE_OWN_SHIFT | ASSIGNEE_PRE_SHIFT`
+- Added three fields to `Organization`: `reminderType @default(NONE)`, `reminderHourUtc Int @default(7)`, `reminderLeadMinutes Int @default(60)`
+- Migration `20260628050902_add_reminder_settings` applied to Supabase
+- Added `PLAN_ALLOWED_REMINDER_TYPES` to `src/lib/plans.ts`: Starter gets type 1; Pro gets types 1–3; Enterprise gets all four
+- Added three email functions to `src/lib/email.ts`: `sendDailySummaryEmail`, `sendPersonalShiftSummaryEmail`, `sendPreShiftReminderEmail`
+- Created `src/app/api/orgs/reminders/route.ts` — PATCH: requires org ownership, validates plan tier server-side, updates the three reminder fields
+- Created `src/components/org/ReminderSettingsForm.tsx` — client form with radio type picker (options filtered by plan), UTC hour picker (0–23) for daily types, lead-time input + unit select for pre-shift type
+- Created `src/app/(app)/settings/reminders/page.tsx` — server page: redirects non-leaders; shows "owner only" message if not owner; renders form with current org settings
+- Created `src/app/api/cron/reminders/route.ts` — hourly GET; verifies `Authorization: Bearer $CRON_SECRET`; processes each org with an active reminder type; plan-gates before sending; pre-shift window is `[now + leadMinutes, now + leadMinutes + 60min)` to ensure each shift is caught exactly once per hourly run
+- Changed `vercel.json` cron from `0 7 * * *` to `0 * * * *` (hourly) so each org can choose its own send hour
+- Added "Reminders" nav link in `src/app/(app)/layout.tsx` (gated to org leaders, before Billing)
+
+### Reminder type gating
+
+| Type | Tier |
+|---|---|
+| ALL_DAILY_SUMMARY — all members, full daily org summary | Starter+ |
+| ASSIGNEE_DAILY_SUMMARY — assigned members only, full daily org summary | Pro+ |
+| ASSIGNEE_OWN_SHIFT — assigned members only, their own shifts | Pro+ |
+| ASSIGNEE_PRE_SHIFT — assigned members, their own shift, X min before | Enterprise |
+
+### Key files
+
+- `prisma/schema.prisma` — ReminderType enum + Organization fields
+- `src/lib/plans.ts` — PLAN_ALLOWED_REMINDER_TYPES
+- `src/lib/email.ts` — three new email functions
+- `src/app/api/orgs/reminders/route.ts` — PATCH save settings
+- `src/components/org/ReminderSettingsForm.tsx` — client settings form
+- `src/app/(app)/settings/reminders/page.tsx` — settings page
+- `src/app/api/cron/reminders/route.ts` — hourly cron handler
+- `vercel.json` — hourly cron schedule
+
+### Env var needed
+
+- `CRON_SECRET` — Vercel injects automatically on deploy; add to `.env.local` for local testing
+
+---
+
+## Previous phases
+
+### Phase 9 — Multi-Org
+
+### What was done
+
+- Added `PLAN_ORG_LIMITS` to `src/lib/plans.ts` (FREE:1, STARTER:3, PRO:8, ENTERPRISE:∞)
+- Wrapped `syncUser` in `React.cache()` in `src/lib/auth.ts` to deduplicate DB calls across shared layout + pages
+- Created `src/lib/org.ts` — `ACTIVE_ORG_COOKIE` constant + `getActiveOrg(userId)` helper (reads cookie, validates membership, falls back to `findFirst` with `orderBy: joinedAt asc` for determinism)
+- Created `src/lib/org-actions.ts` — `switchOrg(orgId)` server action (validates membership, sets `httpOnly` cookie)
+- Created `src/app/api/orgs/route.ts` — POST: create org with plan limit check, sets active-org cookie on success
+- Reworked `src/app/(app)/org/new/page.tsx` — removed inline server action; now checks `ownedOrgCount >= limit` server-side; shows upgrade prompt card when at limit
+- Converted `src/app/(app)/org/new/OrgCreateForm.tsx` to client fetch pattern (`fetch('/api/orgs')`, shows upgrade link on 403)
+- Created `src/app/(app)/layout.tsx` — shared app shell: sticky top nav with logo, Dashboard/Shifts/Members/Reminders/Billing links (Reminders+Billing gated to ORG_LEADER), `OrgSwitcher`, Sign out
+- Created `src/components/org/OrgSwitcher.tsx` — client dropdown; `useTransition` + `router.refresh()` after switch; shows checkmark on active org; "New org" item disabled with "Upgrade" hint when `atOrgLimit`
+- Updated all 5 `(app)` pages to use `getActiveOrg(user.id)` instead of `prisma.orgMember.findFirst()`
+- Removed inline nav and LogoutLink from `dashboard/page.tsx` (now in shared layout)
+
+### Key files
+
+- `src/lib/plans.ts` — added PLAN_ORG_LIMITS
+- `src/lib/auth.ts` — syncUser wrapped in cache()
+- `src/lib/org.ts` — ACTIVE_ORG_COOKIE, getActiveOrg
+- `src/lib/org-actions.ts` — switchOrg server action
+- `src/app/api/orgs/route.ts` — POST create org
+- `src/app/(app)/layout.tsx` — shared app shell (new)
+- `src/components/org/OrgSwitcher.tsx` — org switcher dropdown (new)
+- `src/app/(app)/org/new/page.tsx` — plan gate + create form
+- `src/app/(app)/org/new/OrgCreateForm.tsx` — client fetch form
+
+### Data / cookie flow
+
+1. User visits any `(app)` route → layout fetches `syncUser()` + all memberships + reads `shifty-active-org` cookie
+2. Page calls `getActiveOrg(userId)` independently (cache deduplicates `syncUser`, cookie read is separate)
+3. OrgSwitcher: click org → `switchOrg(orgId)` server action → sets cookie → `router.refresh()` re-renders with new active org
+4. Create org: `POST /api/orgs` → checks plan limit → creates org → sets cookie → client `router.push('/dashboard')`
+
+---
+
+## Previous phases
+
+### Phase 8 — Dashboards
 
 ### What was done
 
