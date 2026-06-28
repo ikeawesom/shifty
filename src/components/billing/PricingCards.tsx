@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Plan } from '@prisma/client'
+import { CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -17,21 +18,24 @@ const TIERS = [
   {
     plan: Plan.STARTER,
     name: 'Starter',
-    features: ['3 organizations', '20 members / org', '5 assignees / shift'],
+    highlighted: false,
+    features: ['3 organizations', '20 members / org', '5 assignees / shift', 'Daily summary reminders'],
   },
   {
     plan: Plan.PRO,
     name: 'Pro',
-    features: ['8 organizations', '50 members / org', '10 assignees / shift', 'Daily reminders'],
+    highlighted: true,
+    features: ['8 organizations', '50 members / org', '10 assignees / shift', 'Daily + personal reminders'],
   },
   {
     plan: Plan.ENTERPRISE,
     name: 'Enterprise',
+    highlighted: false,
     features: [
       'Unlimited organizations',
       'Unlimited members',
       'Unlimited assignees',
-      'Daily reminders',
+      'All reminder types',
     ],
   },
 ]
@@ -80,17 +84,34 @@ export default function PricingCards({ currentPlan, hasStripeCustomer }: Pricing
           const isUpgrade = PLAN_RANK[tier.plan] > PLAN_RANK[currentPlan]
 
           return (
-            <Card key={tier.plan} className={isCurrent ? 'border-primary' : ''}>
+            <Card
+              key={tier.plan}
+              className={
+                isCurrent
+                  ? 'ring-2 ring-primary'
+                  : tier.highlighted
+                  ? 'ring-2 ring-primary/50'
+                  : ''
+              }
+            >
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>{tier.name}</CardTitle>
-                  {isCurrent && <Badge>Current Plan</Badge>}
+                  <CardTitle className="text-base">{tier.name}</CardTitle>
+                  <div className="flex items-center gap-1.5">
+                    {tier.highlighted && !isCurrent && (
+                      <Badge className="text-[10px] uppercase tracking-wide px-1.5">Popular</Badge>
+                    )}
+                    {isCurrent && <Badge variant="secondary">Current</Badge>}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-1 text-sm text-muted-foreground">
+                <ul className="space-y-1.5 text-sm text-muted-foreground">
                   {tier.features.map((f) => (
-                    <li key={f}>• {f}</li>
+                    <li key={f} className="flex items-center gap-2">
+                      <CheckCircle2 className="size-3.5 text-primary shrink-0" />
+                      {f}
+                    </li>
                   ))}
                 </ul>
               </CardContent>

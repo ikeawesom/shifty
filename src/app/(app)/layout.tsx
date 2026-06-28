@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma'
 import { PlatformRole } from '@prisma/client'
 import { LogoutLink } from '@kinde-oss/kinde-auth-nextjs/server'
 import Link from 'next/link'
+import { Zap } from 'lucide-react'
 import { ACTIVE_ORG_COOKIE } from '@/lib/org'
 import { PLAN_ORG_LIMITS } from '@/lib/plans'
 import OrgSwitcher from '@/components/org/OrgSwitcher'
@@ -29,8 +30,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b px-6 h-12 flex items-center gap-6 shrink-0">
-        <Link href="/dashboard" className="font-semibold text-sm tracking-tight">
+      <header className="border-b border-border/60 bg-white/95 backdrop-blur-sm px-6 h-14 flex items-center gap-6 shrink-0 sticky top-0 z-40">
+        <Link href="/dashboard" className="font-bold text-sm tracking-tight text-primary flex items-center gap-1.5 shrink-0">
+          <Zap className="size-4" />
           Shifty
         </Link>
         <nav className="flex items-center gap-4">

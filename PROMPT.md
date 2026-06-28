@@ -3,7 +3,9 @@
 We are building **Shifty**, a shift and task delegation management SaaS platform.
 
 ## Current status
-**Phase 11 (Marketing Pages) is complete. Starting Phase 12: Polish + Deploy.**
+**Phase 12 (Polish + Deploy) is in progress.**
+
+Landing page and dashboard visual polish is complete. The standalone `/pricing` page has been removed — all pricing is now inlined on the landing page with smooth scroll navigation. The app shell nav has also been polished.
 
 ## What was built so far
 - Next.js 16 App Router + TypeScript + Tailwind CSS + shadcn/ui scaffolded and building cleanly
@@ -13,7 +15,7 @@ We are building **Shifty**, a shift and task delegation management SaaS platform
 - Prisma 7 + Supabase PostgreSQL connected
 - `prisma/schema.prisma` — 8 models + 5 enums: User, Organization, OrgMember, Shift, ShiftAssignee, ShiftCompletion, Invitation; enums: PlatformRole, OrgRole, Plan, Recurrence, ReminderType
 - `prisma/migrations/` — init + add_reminder_settings applied to Supabase
-- `src/lib/prisma.ts` — singleton PrismaClient using `@prisma/adapter-pg`
+- `src/lib/prisma.ts` — singleton PrismaClient using `@kinde-oss/kinde-auth-nextjs`
 - `prisma/seed.ts` — seed script (leader + member + org)
 - `@kinde-oss/kinde-auth-nextjs` installed and configured
 - `src/app/api/auth/[kindeAuth]/route.ts` — Kinde catch-all route handler
@@ -23,7 +25,7 @@ We are building **Shifty**, a shift and task delegation management SaaS platform
 - `src/app/api/webhooks/stripe/route.ts` — webhook: syncs subscription/cancellation to DB
 - `src/app/api/billing/checkout/route.ts` — creates Stripe Hosted Checkout Session
 - `src/app/api/billing/portal/route.ts` — creates Stripe Customer Portal session
-- `src/components/billing/PricingCards.tsx` — client pricing UI (Starter / Pro / Enterprise)
+- `src/components/billing/PricingCards.tsx` — client pricing UI (Starter / Pro / Enterprise) with CheckCircle2 icons + Pro ring highlight
 - `src/app/(app)/settings/billing/page.tsx` — billing settings page
 - `src/lib/email.ts` — Nodemailer transporter; `sendInviteEmail`, `sendDailySummaryEmail`, `sendPersonalShiftSummaryEmail`, `sendPreShiftReminderEmail`
 - `src/lib/plans.ts` — PLAN_MEMBER_LIMITS + PLAN_ASSIGNEE_LIMITS + PLAN_ORG_LIMITS + PLAN_ALLOWED_REMINDER_TYPES
@@ -36,59 +38,60 @@ We are building **Shifty**, a shift and task delegation management SaaS platform
 - `src/app/(app)/shifts/page.tsx` — shift list with recurrence badge + assignee names
 - `src/app/(app)/shifts/new/page.tsx` — create shift page (ADMIN only)
 - `src/app/(app)/shifts/new/ShiftForm.tsx` — client form: title, description, dates, recurrence, assignee checkboxes
-- `src/app/api/shifts/[id]/complete/route.ts` — POST: any org member marks shift complete; one per member per shift (409 if duplicate); optional notes
+- `src/app/api/shifts/[id]/complete/route.ts` — POST: any org member marks shift complete; one per member per shift (409 if duplicate)
 - `src/app/(app)/shifts/[id]/page.tsx` — shift detail: title, dates, recurrence, assignees, completion history, "Mark complete" button
 - `src/app/(app)/shifts/[id]/MarkCompleteButton.tsx` — client button for marking complete
-- `src/app/(app)/dashboard/page.tsx` — rich dashboard: role-branched stat cards (ADMIN: org totals + completion rate; MEMBER: personal stats), upcoming shifts list, recent activity feed
+- `src/app/(app)/dashboard/page.tsx` — dashboard: role-branched stat cards with icons, upcoming shifts, recent activity feed
 - `src/lib/org.ts` — `ACTIVE_ORG_COOKIE` constant + `getActiveOrg(userId)` helper
 - `src/lib/org-actions.ts` — `switchOrg(orgId)` server action
 - `src/app/api/orgs/route.ts` — POST: create org (plan limit check, sets active-org cookie)
-- `src/app/(app)/layout.tsx` — shared app shell: top nav with logo, page links, OrgSwitcher dropdown, Sign out; Reminders + Billing gated to org leaders
+- `src/app/(app)/layout.tsx` — app shell: sticky glass nav h-14 with Zap logo (purple), page links, OrgSwitcher, Sign out; Reminders + Billing gated to org leaders
 - `src/components/org/OrgSwitcher.tsx` — client dropdown: switch orgs + "New org" gated by plan limit
 - `src/app/(app)/org/new/page.tsx` — shows plan-limit upgrade prompt when at cap; otherwise shows OrgCreateForm
 - `src/app/(app)/org/new/OrgCreateForm.tsx` — client fetch form posting to `/api/orgs`
 - `src/app/api/orgs/reminders/route.ts` — PATCH: owner-only, plan-gated, updates org reminder settings
-- `src/components/org/ReminderSettingsForm.tsx` — client form: reminder type radio (filtered by plan), UTC hour picker, lead-time input
+- `src/components/org/ReminderSettingsForm.tsx` — client form: reminder type radio, UTC hour picker, lead-time input
 - `src/app/(app)/settings/reminders/page.tsx` — reminder settings page (org leaders / owners only)
 - `src/app/api/cron/reminders/route.ts` — hourly cron handler: `CRON_SECRET` auth, routes per ReminderType, plan-gates before send
-- `src/app/page.tsx` — full landing page: hero, 4-feature card grid, pricing preview teaser, footer; redirects authenticated users to dashboard
-- `src/app/(marketing)/layout.tsx` — marketing shell: nav (logo, Pricing, LoginLink, RegisterLink) + footer; no auth required
-- `src/app/(marketing)/pricing/page.tsx` — pricing comparison table (Free/Starter/Pro/Enterprise); values from `src/lib/plans.ts`; statically prerendered
+- `src/app/globals.css` — purple primary theme, scroll-behavior: smooth, Geist font fix
+- `src/components/marketing/MarketingHeader.tsx` — sticky glass nav h-16; Zap logo; "Features" + "Pricing" hash links on right; rounded-full "Get started"
+- `src/components/marketing/MarketingFooter.tsx` — logo | copyright | nav links; Pricing links to `/#pricing`
+- `src/app/(marketing)/layout.tsx` — marketing shell using shared header/footer
+- `src/app/page.tsx` — full landing page: Hero (blob deco, primary headline), How It Works (numbered steps), Features bento grid (`id="features"`), full Pricing section (`id="pricing"`, 4 cards + comparison table), dark CTA banner
 
 ## Tech stack
 - Next.js 16 App Router + TypeScript
-- Tailwind CSS + shadcn/ui
+- Tailwind CSS v4 + shadcn/ui (base-nova, no tailwind.config.ts — theme in globals.css)
 - Prisma 7 + Supabase (PostgreSQL) — **Note: Prisma 7 uses `prisma.config.ts`, not `url` in schema**
 - Kinde (auth) — **Note: Next.js 16 uses `proxy.ts` not `middleware.ts`**
 - Stripe (billing)
 - Gmail SMTP / Nodemailer (email — invites + reminders)
 - Vercel Cron (hourly reminders: `0 * * * *`)
 - Vercel (deploy)
+- Google Stitch MCP (configured as `stitch` server — restart Claude Code to load)
 
 ## User types
 - **Org Leader**: self-registers, pays Stripe; is ADMIN in their org
 - **Member**: invite-only via email token, always free; is MEMBER in org
 
-## Subscription tiers (Org Leaders only, pricing TBD)
-| Tier | Max orgs | Max members/org | Assignees/shift | Reminder types |
-|---|---|---|---|---|
-| Free | 1 | 10 | 1 | None |
-| Starter | 3 | 20 | 5 | Daily summary (all members) |
-| Pro | 8 | 50 | 10 | + Daily summary (assigned only), Personal shift summary |
-| Enterprise | ∞ | ∞ | ∞ | + Pre-shift alert |
+## Subscription tiers (Org Leaders only)
+| Tier | Price | Max orgs | Max members/org | Assignees/shift | Reminder types |
+|---|---|---|---|---|---|
+| Free | $0 | 1 | 10 | 1 | None |
+| Starter | $9/mo | 3 | 20 | 5 | Daily summary (all members) |
+| Pro | $29/mo | 8 | 50 | 10 | + Daily summary (assigned only), Personal shift summary |
+| Enterprise | Custom | ∞ | ∞ | ∞ | + Pre-shift alert |
 
-## Phase 12 — What to build
+> Note: $9/mo and $29/mo are placeholders — confirm before launch.
 
-### What Claude will build
+## Phase 12 — What remains to build
 
-Polish + Deploy: final production-readiness pass before going live on Vercel.
-
-#### What to build (TBD — confirm with user before starting)
-- Error pages: `src/app/not-found.tsx`, `src/app/error.tsx`
-- Loading states: `loading.tsx` skeletons for slow pages (dashboard, shifts)
-- SEO: `src/app/layout.tsx` metadata, Open Graph tags on landing/pricing
-- Environment variable audit: ensure all secrets are documented for Vercel
-- Vercel deploy checklist: `DATABASE_URL`, `KINDE_*`, `STRIPE_*`, `EMAIL_*`, `CRON_SECRET`
+### Priority order
+1. **Error pages** — `src/app/not-found.tsx`, `src/app/error.tsx`
+2. **Loading states** — `src/app/(app)/dashboard/loading.tsx`, `src/app/(app)/shifts/loading.tsx` (skeleton cards using shadcn/ui Skeleton)
+3. **SEO** — update `src/app/layout.tsx` metadata + add Open Graph to landing page
+4. **Env var audit** — all required secrets documented in PLAN.md
+5. **Vercel deploy**
 
 ## Working agreement
 - Build **phase by phase** — confirm each phase works before starting the next
