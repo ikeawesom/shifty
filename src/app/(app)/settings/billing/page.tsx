@@ -6,15 +6,18 @@ export default async function BillingPage() {
   const user = await syncUser()
 
   return (
-    <main className="flex flex-col flex-1 gap-8 p-8">
+    <main className="flex flex-col flex-1 gap-6 p-8 max-w-4xl">
       <div>
         <h1 className="text-2xl font-semibold">Billing</h1>
-        <p className="text-muted-foreground mt-1">Manage your subscription</p>
+        <p className="text-muted-foreground mt-1 text-sm">Manage your subscription and plan</p>
       </div>
 
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Current plan:</span>
-        <Badge variant="secondary">{user.plan}</Badge>
+      <div className="bg-white border border-border rounded-xl p-5 shadow-sm flex items-center justify-between">
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Current Plan</p>
+          <Badge variant="secondary" className="text-sm">{user.plan}</Badge>
+        </div>
+        <p className="text-xs text-muted-foreground">Upgrade or manage below</p>
       </div>
 
       <PricingCards currentPlan={user.plan} hasStripeCustomer={!!user.stripeCustomerId} />

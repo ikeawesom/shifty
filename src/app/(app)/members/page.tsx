@@ -32,41 +32,91 @@ export default async function MembersPage() {
     : []
 
   return (
-    <main className="flex flex-col flex-1 gap-6 p-8 max-w-2xl">
-      <h1 className="text-2xl font-semibold">Members</h1>
-
-      <section>
-        <h2 className="text-sm font-medium text-muted-foreground mb-3">
+    <main className="flex flex-col flex-1 gap-6 p-8 max-w-4xl">
+      <div>
+        <h1 className="text-2xl font-semibold">Members</h1>
+        <p className="text-muted-foreground mt-1 text-sm">
           {membership.org.name} · {members.length} member{members.length !== 1 ? 's' : ''}
-        </h2>
-        <ul className="divide-y border rounded-lg">
-          {members.map((m) => (
-            <li key={m.id} className="flex items-center justify-between px-4 py-3">
-              <div>
-                <p className="text-sm font-medium">{m.user.name ?? m.user.email}</p>
-                <p className="text-xs text-muted-foreground">{m.user.email}</p>
-              </div>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">
-                {m.role}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
+        </p>
+      </div>
 
+      {/* Quick stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Members', value: members.length },
+          { label: 'Pending Invites', value: pendingInvites.length },
+        ].map((s) => (
+          <div key={s.label} className="bg-white border border-border rounded-xl p-4 shadow-sm">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">{s.label}</p>
+            <p className="text-2xl font-bold mt-1">{s.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Members table */}
+      <div className="bg-white border border-border rounded-xl overflow-hidden shadow-sm">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="border-b border-border bg-muted/40">
+              <th className="px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Member</th>
+              <th className="px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Role</th>
+              <th className="px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Joined</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {members.map((m) => (
+              <tr key={m.id} className="hover:bg-muted/30 transition-colors">
+                <td className="px-6 py-4">
+                  <div>
+                    <p className="text-sm font-medium">{m.user.name ?? m.user.email}</p>
+                    <p className="text-xs text-muted-foreground">{m.user.email}</p>
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <span
+                    className={[
+                      'text-xs px-2.5 py-1 rounded-full font-semibold',
+                      m.role === OrgRole.ADMIN
+                        ? 'bg-primary/10 text-primary'
+                        : 'bg-muted text-muted-foreground',
+                    ].join(' ')}
+                  >
+                    {m.role}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-sm text-muted-foreground">
+                  {m.joinedAt.toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pending invites */}
       {isAdmin && pendingInvites.length > 0 && (
         <section>
-          <h2 className="text-sm font-medium text-muted-foreground mb-3">Pending invites</h2>
-          <ul className="divide-y border rounded-lg">
-            {pendingInvites.map((inv) => (
-              <li key={inv.id} className="flex items-center justify-between px-4 py-3">
-                <p className="text-sm">{inv.email}</p>
-                <span className="text-xs text-muted-foreground">
-                  Expires {inv.expiresAt.toLocaleDateString()}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <h2 className="text-sm font-semibold mb-3">Pending Invites</h2>
+          <div className="bg-white border border-border rounded-xl overflow-hidden shadow-sm">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-border bg-muted/40">
+                  <th className="px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Email</th>
+                  <th className="px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Expires</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {pendingInvites.map((inv) => (
+                  <tr key={inv.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-6 py-4 text-sm">{inv.email}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">
+                      {inv.expiresAt.toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
 

@@ -19,10 +19,10 @@ export default async function RemindersPage() {
 
   if (activeOrg.org.ownerId !== user.id) {
     return (
-      <main className="flex flex-col flex-1 gap-8 p-8">
+      <main className="flex flex-col flex-1 gap-6 p-8 max-w-2xl">
         <div>
           <h1 className="text-2xl font-semibold">Reminders</h1>
-          <p className="text-muted-foreground mt-1">Configure email reminders for your organisation</p>
+          <p className="text-muted-foreground mt-1 text-sm">Configure email reminders for your organisation</p>
         </div>
         <p className="text-sm text-muted-foreground">
           Only the organisation owner can configure reminders.
@@ -32,20 +32,23 @@ export default async function RemindersPage() {
   }
 
   return (
-    <main className="flex flex-col flex-1 gap-8 p-8">
+    <main className="flex flex-col flex-1 gap-6 p-8 max-w-2xl">
       <div>
         <h1 className="text-2xl font-semibold">Reminders</h1>
-        <p className="text-muted-foreground mt-1">
-          Configure email reminders for <strong>{activeOrg.org.name}</strong>
-        </p>
+        <p className="text-muted-foreground mt-1 text-sm">Configure email reminders for your organisation</p>
       </div>
 
-      <ReminderSettingsForm
-        plan={user.plan}
-        currentType={activeOrg.org.reminderType}
-        currentHourUtc={activeOrg.org.reminderHourUtc}
-        currentLeadMinutes={activeOrg.org.reminderLeadMinutes}
-      />
+      <div className="bg-white border border-border rounded-xl p-6 shadow-sm">
+        <p className="text-sm text-muted-foreground mb-6">
+          Configuring reminders for <strong>{activeOrg.org.name}</strong>
+        </p>
+        <ReminderSettingsForm
+          plan={user.plan}
+          currentType={activeOrg.org.reminderType}
+          currentHourUtc={activeOrg.org.reminderHourUtc}
+          currentLeadMinutes={activeOrg.org.reminderLeadMinutes}
+        />
+      </div>
     </main>
   )
 }

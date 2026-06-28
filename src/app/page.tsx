@@ -4,19 +4,6 @@ import { LoginLink, RegisterLink } from '@kinde-oss/kinde-auth-nextjs/components
 import { MarketingHeader } from '@/components/marketing/MarketingHeader'
 import { MarketingFooter } from '@/components/marketing/MarketingFooter'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
-  PLAN_MEMBER_LIMITS,
-  PLAN_ASSIGNEE_LIMITS,
-  PLAN_ORG_LIMITS,
-} from '@/lib/plans'
-import {
   CalendarDays,
   Users,
   Bell,
@@ -26,10 +13,6 @@ import {
   Sparkles,
   ArrowRight,
 } from 'lucide-react'
-
-function fmt(n: number) {
-  return n === Infinity ? '∞' : String(n)
-}
 
 const PRICING_TIERS = [
   {
@@ -400,81 +383,6 @@ export default async function HomePage() {
               ))}
             </div>
 
-            {/* Comparison table */}
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both" style={{ animationDelay: '300ms' }}>
-              <h3 className="text-xl font-bold text-center mb-8">Compare all features</h3>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-48">Feature</TableHead>
-                    <TableHead>Free</TableHead>
-                    <TableHead>Starter</TableHead>
-                    <TableHead className="text-primary font-semibold">Pro</TableHead>
-                    <TableHead>Enterprise</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell className="font-medium text-muted-foreground">Price</TableCell>
-                    <TableCell className="font-semibold">Free</TableCell>
-                    <TableCell>$9/mo</TableCell>
-                    <TableCell>$29/mo</TableCell>
-                    <TableCell className="text-muted-foreground">Custom</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium text-muted-foreground">Organizations</TableCell>
-                    <TableCell>{fmt(PLAN_ORG_LIMITS.FREE)}</TableCell>
-                    <TableCell>{fmt(PLAN_ORG_LIMITS.STARTER)}</TableCell>
-                    <TableCell>{fmt(PLAN_ORG_LIMITS.PRO)}</TableCell>
-                    <TableCell>{fmt(PLAN_ORG_LIMITS.ENTERPRISE)}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium text-muted-foreground">Members / org</TableCell>
-                    <TableCell>{fmt(PLAN_MEMBER_LIMITS.FREE)}</TableCell>
-                    <TableCell>{fmt(PLAN_MEMBER_LIMITS.STARTER)}</TableCell>
-                    <TableCell>{fmt(PLAN_MEMBER_LIMITS.PRO)}</TableCell>
-                    <TableCell>{fmt(PLAN_MEMBER_LIMITS.ENTERPRISE)}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium text-muted-foreground">Assignees / shift</TableCell>
-                    <TableCell>{fmt(PLAN_ASSIGNEE_LIMITS.FREE)}</TableCell>
-                    <TableCell>{fmt(PLAN_ASSIGNEE_LIMITS.STARTER)}</TableCell>
-                    <TableCell>{fmt(PLAN_ASSIGNEE_LIMITS.PRO)}</TableCell>
-                    <TableCell>{fmt(PLAN_ASSIGNEE_LIMITS.ENTERPRISE)}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium text-muted-foreground">Email reminders</TableCell>
-                    <TableCell className="text-muted-foreground">None</TableCell>
-                    <TableCell>Daily summary</TableCell>
-                    <TableCell>Daily + Personal</TableCell>
-                    <TableCell>Daily + Personal + Pre-shift</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell />
-                    <TableCell>
-                      <RegisterLink className="inline-flex items-center justify-center rounded-full border border-input bg-background px-4 py-1.5 text-sm font-medium hover:bg-muted transition-colors">
-                        Get started free
-                      </RegisterLink>
-                    </TableCell>
-                    <TableCell>
-                      <RegisterLink className="inline-flex items-center justify-center rounded-full border border-input bg-background px-4 py-1.5 text-sm font-medium hover:bg-muted transition-colors">
-                        Get started
-                      </RegisterLink>
-                    </TableCell>
-                    <TableCell>
-                      <RegisterLink className="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground px-4 py-1.5 text-sm font-medium hover:bg-primary/90 transition-colors">
-                        Get started
-                      </RegisterLink>
-                    </TableCell>
-                    <TableCell>
-                      <RegisterLink className="inline-flex items-center justify-center rounded-full border border-input bg-background px-4 py-1.5 text-sm font-medium hover:bg-muted transition-colors">
-                        Contact us
-                      </RegisterLink>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </div>
           </div>
         </section>
 
