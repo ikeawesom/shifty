@@ -14,9 +14,9 @@ type ShiftResult = {
 
 type MemberResult = {
   id: string
-  name: string | null
-  email: string
+  displayName: string | null
   role: string
+  realName?: string | null
 }
 
 export default function GlobalSearch() {
@@ -129,8 +129,10 @@ export default function GlobalSearch() {
                       onClick={() => { router.push('/members'); close() }}
                       className="w-full flex flex-col px-4 py-2.5 hover:bg-muted/40 transition-colors text-left"
                     >
-                      <span className="text-sm font-medium">{m.name ?? m.email}</span>
-                      <span className="text-xs text-muted-foreground">{m.email}</span>
+                      <span className="text-sm font-medium">{m.displayName ?? '—'}</span>
+                      {m.realName != null && (
+                        <span className="text-xs text-muted-foreground">{m.realName}</span>
+                      )}
                     </button>
                   </li>
                 ))}
