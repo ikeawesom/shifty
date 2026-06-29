@@ -81,13 +81,19 @@ export default function ReminderSettingsForm({
 }) {
   const router = useRouter()
   const [type, setType] = useState<ReminderType>(currentType)
-  const [hourUtc, setHourUtc] = useState<number>(currentHourUtc)
-  const [leadValue, setLeadValue] = useState<number>(
-    currentLeadMinutes % 60 === 0 ? currentLeadMinutes / 60 : currentLeadMinutes
+  const [hourUtc, setHourUtc] = useState<string>(
+    `${String(currentHourUtc).padStart(2, '0')}:00`
   )
-  const [leadUnit, setLeadUnit] = useState<'minutes' | 'hours'>(
-    currentLeadMinutes % 60 === 0 ? 'hours' : 'minutes'
-  )
+  const [leadValue, setLeadValue] = useState<number>(() => {
+    if (currentLeadMinutes % 1440 === 0) return currentLeadMinutes / 1440
+    if (currentLeadMinutes % 60 === 0) return currentLeadMinutes / 60
+    return currentLeadMinutes
+  })
+  const [leadUnit, setLeadUnit] = useState<'minutes' | 'hours' | 'days'>(() => {
+    if (currentLeadMinutes % 1440 === 0) return 'days'
+    if (currentLeadMinutes % 60 === 0) return 'hours'
+    return 'minutes'
+  })
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null)
 
@@ -96,14 +102,16 @@ export default function ReminderSettingsForm({
     setSaving(true)
     setMessage(null)
 
-    const leadMinutes = leadUnit === 'hours' ? leadValue * 60 : leadValue
+    const leadMinutes =
+      leadUnit === 'days' ? leadValue * 1440 : leadUnit === 'hours' ? leadValue * 60 : leadValue
+    const reminderHourUtc = parseInt(hourUtc.split(':')[0], 10)
 
     const res = await fetch('/api/orgs/reminders', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         reminderType: type,
-        reminderHourUtc: hourUtc,
+        reminderHourUtc: reminderHourUtc,
         reminderLeadMinutes: leadMinutes,
       }),
     })
@@ -128,7 +136,7 @@ export default function ReminderSettingsForm({
             <label
               key={opt.value}
               className={`flex items-start gap-3 rounded-lg border p-4 cursor-pointer transition-colors ${
-                type === opt.value ? 'border-foreground bg-muted' : 'border-border hover:bg-muted/50'
+                type === opt.value ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
               } ${!allowed ? 'opacity-40 cursor-not-allowed' : ''}`}
             >
               <input
@@ -138,7 +146,7 @@ export default function ReminderSettingsForm({
                 checked={type === opt.value}
                 disabled={!allowed}
                 onChange={() => setType(opt.value)}
-                className="mt-0.5 shrink-0"
+                className="mt-0.5 shrink-0 accent-primary"
               />
               <div className="flex flex-col gap-0.5 min-w-0">
                 <div className="flex items-center gap-2">
@@ -158,18 +166,17 @@ export default function ReminderSettingsForm({
 
       {type !== ReminderType.NONE && DAILY_SUMMARY_TYPES.has(type) && (
         <div className="flex flex-col gap-2">
-          <Label htmlFor="hourUtc">Send time (UTC hour, 0–23)</Label>
+          <Label htmlFor="hourUtc">Send time (UTC)</Label>
           <input
             id="hourUtc"
-            type="number"
-            min={0}
-            max={23}
+            type="time"
+            step={3600}
             value={hourUtc}
-            onChange={(e) => setHourUtc(Math.max(0, Math.min(23, Number(e.target.value))))}
-            className="w-24 rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm"
+            onChange={(e) => setHourUtc(e.target.value)}
+            className="w-32 rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm"
           />
           <span className="text-xs text-muted-foreground">
-            Default is 7 (07:00 UTC). The cron runs hourly; emails are sent on the matching hour.
+            Default is 07:00 UTC. The cron runs hourly; emails are sent on the matching hour.
           </span>
         </div>
       )}
@@ -187,11 +194,12 @@ export default function ReminderSettingsForm({
             />
             <select
               value={leadUnit}
-              onChange={(e) => setLeadUnit(e.target.value as 'minutes' | 'hours')}
+              onChange={(e) => setLeadUnit(e.target.value as 'minutes' | 'hours' | 'days')}
               className="rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm"
             >
               <option value="minutes">minutes</option>
               <option value="hours">hours</option>
+              <option value="days">days</option>
             </select>
           </div>
           <span className="text-xs text-muted-foreground">
