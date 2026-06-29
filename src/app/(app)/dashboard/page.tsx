@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import prisma from '@/lib/prisma'
 import Link from 'next/link'
 import { OrgRole } from '@prisma/client'
-import { getActiveOrg } from '@/lib/org'
+import { getActiveOrg, resolveMemberName } from '@/lib/org'
 import {
   CalendarDays, Users, TrendingUp, CheckCircle2, Clock, type LucideIcon,
 } from 'lucide-react'
@@ -191,7 +191,7 @@ export default async function DashboardPage() {
                               <p className="text-xs text-muted-foreground truncate">
                                 {shift.assignees.length > 0
                                   ? shift.assignees
-                                      .map((a) => a.member.user.name ?? a.member.user.email)
+                                      .map((a) => resolveMemberName(a.member, membership.org.nameMode))
                                       .join(', ')
                                   : 'Unassigned'}
                               </p>
@@ -238,7 +238,7 @@ export default async function DashboardPage() {
                         <li key={m.id} className="flex items-center gap-3">
                           <div className="relative">
                             <div className="size-8 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center uppercase">
-                              {(m.user.name ?? m.user.email ?? 'U').charAt(0)}
+                              {resolveMemberName(m, membership.org.nameMode).charAt(0)}
                             </div>
                             <span
                               className={`absolute bottom-0 right-0 size-2.5 rounded-full border-2 border-white ${
@@ -248,7 +248,7 @@ export default async function DashboardPage() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate">
-                              {m.user.name ?? m.user.email}
+                              {resolveMemberName(m, membership.org.nameMode)}
                             </p>
                             <p className={`text-xs ${isOnShift ? 'text-green-600' : 'text-muted-foreground'}`}>
                               {isOnShift ? 'On Shift' : 'Off Duty'}
@@ -274,7 +274,7 @@ export default async function DashboardPage() {
                         <div className="flex flex-col gap-0.5 min-w-0">
                           <span className="text-sm truncate">
                             <span className="font-medium">
-                              {c.completedBy.user.name ?? c.completedBy.user.email}
+                              {resolveMemberName(c.completedBy, membership.org.nameMode)}
                             </span>
                             {' completed '}
                             <Link
@@ -421,7 +421,7 @@ export default async function DashboardPage() {
                   <div className="flex flex-col gap-0.5 min-w-0">
                     <span className="text-sm truncate">
                       <span className="font-medium">
-                        {c.completedBy.user.name ?? c.completedBy.user.email}
+                        {resolveMemberName(c.completedBy, membership.org.nameMode)}
                       </span>
                       {' completed '}
                       <Link

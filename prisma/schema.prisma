@@ -46,6 +46,11 @@ enum NotificationType {
   INVITED_TO_ORG
 }
 
+enum NameMode {
+  ACCOUNT_NAME
+  DISPLAY_NAME
+}
+
 // ─── Models ───────────────────────────────────────────────────────────────────
 
 model User {
@@ -90,6 +95,7 @@ model Organization {
   reminderType        ReminderType @default(NONE)
   reminderHourUtc     Int          @default(7)
   reminderLeadMinutes Int          @default(60)
+  nameMode            NameMode     @default(ACCOUNT_NAME)
 
   owner       User         @relation(fields: [ownerId], references: [id])
   members     OrgMember[]
@@ -103,6 +109,7 @@ model OrgMember {
   orgId       String
   role        OrgRole  @default(MEMBER)
   displayName String?
+  showEmail   Boolean  @default(true)
   joinedAt    DateTime @default(now())
 
   user            User             @relation(fields: [userId], references: [id])

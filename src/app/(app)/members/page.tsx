@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import { OrgRole } from '@prisma/client'
 import MemberInviteForm from './MemberInviteForm'
-import { getActiveOrg } from '@/lib/org'
+import { getActiveOrg, resolveMemberName } from '@/lib/org'
 
 export default async function MembersPage() {
   const user = await syncUser()
@@ -68,7 +68,7 @@ export default async function MembersPage() {
               <tr key={m.id} className="hover:bg-muted/30 transition-colors">
                 <td className="px-6 py-4">
                   <div>
-                    <p className="text-sm font-medium">{m.displayName ?? m.user.name ?? m.user.email}</p>
+                    <p className="text-sm font-medium">{resolveMemberName(m, membership.org.nameMode)}</p>
                     <p className="text-xs text-muted-foreground">{m.user.email}</p>
                   </div>
                 </td>

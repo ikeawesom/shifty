@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import { OrgRole, Recurrence } from '@prisma/client'
 import Link from 'next/link'
-import { getActiveOrg } from '@/lib/org'
+import { getActiveOrg, resolveMemberName } from '@/lib/org'
 
 const RECURRENCE_LABEL: Record<Recurrence, string | null> = {
   ONE_OFF: null,
@@ -117,7 +117,7 @@ export default async function ShiftsPage() {
                     {shift.assignees.length > 0 && (
                       <p className="text-xs text-muted-foreground">
                         Assigned to:{' '}
-                        {shift.assignees.map((a) => a.member.user.name ?? a.member.user.email).join(', ')}
+                        {shift.assignees.map((a) => resolveMemberName(a.member, membership.org.nameMode)).join(', ')}
                       </p>
                     )}
                   </div>

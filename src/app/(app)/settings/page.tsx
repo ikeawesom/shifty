@@ -34,7 +34,7 @@ export default async function SettingsPage() {
         <>
           <div className="bg-white border border-border rounded-2xl p-6 shadow-sm space-y-4">
             <h2 className="text-base font-semibold">Organisation</h2>
-            <OrgSettingsForm orgId={membership.orgId} currentName={membership.org.name} />
+            <OrgSettingsForm orgId={membership.orgId} currentName={membership.org.name} currentNameMode={membership.org.nameMode} />
           </div>
 
           <div className="bg-white border border-red-200 rounded-2xl p-6 shadow-sm space-y-4">
