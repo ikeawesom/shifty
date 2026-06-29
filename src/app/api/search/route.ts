@@ -22,7 +22,13 @@ export async function GET(request: Request) {
       orderBy: { startsAt: 'asc' },
     }),
     prisma.orgMember.findMany({
-      where: { orgId: activeOrg.orgId, displayName: { contains: q, mode: 'insensitive' } },
+      where: {
+        orgId: activeOrg.orgId,
+        OR: [
+          { displayName: { contains: q, mode: 'insensitive' } },
+          { showEmail: true, user: { email: { contains: q, mode: 'insensitive' } } },
+        ],
+      },
       select: {
         id: true,
         displayName: true,

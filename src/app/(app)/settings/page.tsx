@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import OrgSettingsForm from './OrgSettingsForm'
 import DeleteOrgButton from './DeleteOrgButton'
 import DisplayNameForm from './profile/DisplayNameForm'
+import EmailVisibilityForm from './EmailVisibilityForm'
 
 export default async function SettingsPage() {
   const user = await syncUser()
@@ -28,6 +29,16 @@ export default async function SettingsPage() {
           </p>
         </div>
         <DisplayNameForm currentDisplayName={membership.displayName} fallbackName={user.name} />
+      </div>
+
+      <div className="bg-white border border-border rounded-2xl p-6 shadow-sm space-y-4">
+        <div>
+          <h2 className="text-base font-semibold">Email Visibility</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Control whether other members in {membership.org.name} can see your email address.
+          </p>
+        </div>
+        <EmailVisibilityForm showEmail={membership.showEmail} />
       </div>
 
       {isAdmin && (
