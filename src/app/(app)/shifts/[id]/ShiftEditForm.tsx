@@ -6,7 +6,8 @@ import { Recurrence } from '@prisma/client'
 
 interface Member {
   id: string
-  user: { name: string | null; email: string }
+  name: string
+  email: string
 }
 
 interface ShiftEditFormProps {
@@ -190,12 +191,8 @@ export default function ShiftEditForm({ shift, orgMembers }: ShiftEditFormProps)
                       className="h-4 w-4 rounded border-gray-300"
                     />
                     <label htmlFor={`edit-member-${m.id}`} className="text-sm cursor-pointer">
-                      {m.user.name ?? m.user.email}
-                      {m.user.name && (
-                        <span className="text-muted-foreground ml-1 text-xs">
-                          {m.user.email}
-                        </span>
-                      )}
+                      {m.name}
+                      <span className="text-muted-foreground ml-1 text-xs">{m.email}</span>
                     </label>
                   </li>
                 ))}

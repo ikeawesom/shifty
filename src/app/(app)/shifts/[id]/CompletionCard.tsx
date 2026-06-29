@@ -5,11 +5,11 @@ import UndoCompletionButton from './UndoCompletionButton'
 
 type Completion = {
   id: string
-  completedBy: { user: { name: string | null; email: string } }
+  completedByName: string
   completedAt: Date
   notes: string | null
   revertedAt: Date | null
-  revertedBy: { user: { name: string | null; email: string } } | null
+  revertedByName: string | null
 }
 
 function formatDate(d: Date) {
@@ -18,10 +18,6 @@ function formatDate(d: Date) {
 
 function formatTime(d: Date) {
   return new Date(d).toLocaleTimeString(undefined, { timeStyle: 'short' })
-}
-
-function memberName(user: { name: string | null; email: string }) {
-  return user.name ?? user.email
 }
 
 const NOTES_THRESHOLD = 100
@@ -46,7 +42,7 @@ export default function CompletionCard({
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-col gap-0.5">
           <span className="text-sm font-medium">
-            {memberName(completion.completedBy.user)}
+            {completion.completedByName}
           </span>
           <span className="text-xs text-muted-foreground">
             {formatDate(completion.completedAt)} {formatTime(completion.completedAt)}
@@ -78,10 +74,10 @@ export default function CompletionCard({
         </div>
       )}
 
-      {completion.revertedAt !== null && completion.revertedBy && (
+      {completion.revertedAt !== null && completion.revertedByName && (
         <p className="text-xs text-muted-foreground mt-1">
-          ↩ {memberName(completion.revertedBy.user)} reverted{' '}
-          {memberName(completion.completedBy.user)}{"'s shift"} ·{' '}
+          ↩ {completion.revertedByName} reverted{' '}
+          {completion.completedByName}{"'s shift"} ·{' '}
           {formatDate(completion.revertedAt)} {formatTime(completion.revertedAt)}
         </p>
       )}

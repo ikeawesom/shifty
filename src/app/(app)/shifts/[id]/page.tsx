@@ -6,7 +6,7 @@ import Link from 'next/link'
 import MarkCompleteButton from './MarkCompleteButton'
 import ShiftEditForm from './ShiftEditForm'
 import CompletionCard from './CompletionCard'
-import { getActiveOrg } from '@/lib/org'
+import { getActiveOrg, resolveMemberName } from '@/lib/org'
 
 type Params = Promise<{ id: string }>
 
@@ -52,6 +52,7 @@ export default async function ShiftDetailPage({ params }: { params: Params }) {
   if (!shift || shift.orgId !== membership.orgId) redirect('/shifts')
 
   const isAdmin = membership.role === OrgRole.ADMIN
+  const { nameMode } = membership.org
 
   const alreadyCompleted = shift.completions.some(
     (c) => c.completedById === membership.id && c.revertedAt === null,
@@ -101,7 +102,8 @@ export default async function ShiftDetailPage({ params }: { params: Params }) {
           }}
           orgMembers={orgMembers.map((m) => ({
             id: m.id,
-            user: { name: m.user.name, email: m.user.email },
+            name: resolveMemberName(m, nameMode),
+            email: m.user.email,
           }))}
         />
       )}
@@ -111,7 +113,7 @@ export default async function ShiftDetailPage({ params }: { params: Params }) {
           <h2 className="text-sm font-medium">Assignees</h2>
           <ul className="text-sm text-muted-foreground space-y-1">
             {shift.assignees.map((a) => (
-              <li key={a.id}>{a.member.user.name ?? a.member.user.email}</li>
+              <li key={a.id}>{resolveMemberName(a.member, nameMode)}</li>
             ))}
           </ul>
         </section>
@@ -134,12 +136,12 @@ export default async function ShiftDetailPage({ params }: { params: Params }) {
                 key={c.id}
                 completion={{
                   id: c.id,
-                  completedBy: { user: { name: c.completedBy.user.name, email: c.completedBy.user.email } },
+                  completedByName: resolveMemberName(c.completedBy, nameMode),
                   completedAt: c.completedAt,
                   notes: c.notes,
                   revertedAt: c.revertedAt,
-                  revertedBy: c.revertedBy
-                    ? { user: { name: c.revertedBy.user.name, email: c.revertedBy.user.email } }
+                  revertedByName: c.revertedBy
+                    ? resolveMemberName(c.revertedBy, nameMode)
                     : null,
                 }}
                 isAdmin={isAdmin}
