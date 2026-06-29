@@ -1,6 +1,6 @@
 import { syncUser } from '@/lib/auth'
 import { getActiveOrg } from '@/lib/org'
-import { OrgRole } from '@prisma/client'
+import { NameMode, OrgRole } from '@prisma/client'
 import { redirect } from 'next/navigation'
 import OrgSettingsForm from './OrgSettingsForm'
 import DeleteOrgButton from './DeleteOrgButton'
@@ -13,6 +13,7 @@ export default async function SettingsPage() {
   if (!membership) redirect('/dashboard')
 
   const isAdmin = membership.role === OrgRole.ADMIN
+  const displayNameDisabled = membership.org.nameMode === NameMode.ACCOUNT_NAME
 
   return (
     <main className="flex flex-col flex-1 gap-6 p-8 max-w-2xl">
@@ -21,14 +22,18 @@ export default async function SettingsPage() {
         <p className="text-muted-foreground mt-1 text-sm">{membership.org.name}</p>
       </div>
 
-      <div className="bg-white border border-border rounded-2xl p-6 shadow-sm space-y-4">
+      <div className={`bg-white border border-border rounded-2xl p-6 shadow-sm space-y-4 ${displayNameDisabled ? 'opacity-60' : ''}`}>
         <div>
           <h2 className="text-base font-semibold">Display Name</h2>
           <p className="text-sm text-muted-foreground mt-1">
             Shown to other members in {membership.org.name}. Falls back to your account name when not set.
           </p>
         </div>
-        <DisplayNameForm currentDisplayName={membership.displayName} fallbackName={user.name} />
+        <DisplayNameForm
+          currentDisplayName={membership.displayName}
+          fallbackName={user.name}
+          disabled={displayNameDisabled}
+        />
       </div>
 
       <div className="bg-white border border-border rounded-2xl p-6 shadow-sm space-y-4">

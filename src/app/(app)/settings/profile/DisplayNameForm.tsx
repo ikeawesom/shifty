@@ -2,7 +2,7 @@
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-export default function DisplayNameForm({ currentDisplayName, fallbackName }: { currentDisplayName: string | null; fallbackName: string | null }) {
+export default function DisplayNameForm({ currentDisplayName, fallbackName, disabled = false }: { currentDisplayName: string | null; fallbackName: string | null; disabled?: boolean }) {
   const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
   const [saving, setSaving] = useState(false)
@@ -24,6 +24,14 @@ export default function DisplayNameForm({ currentDisplayName, fallbackName }: { 
       setTimeout(() => setSaved(false), 3000)
       router.refresh()
     } finally { setSaving(false) }
+  }
+
+  if (disabled) {
+    return (
+      <p className="text-sm text-muted-foreground italic">
+        The admin does not allow using display names in this organisation.
+      </p>
+    )
   }
 
   return (
