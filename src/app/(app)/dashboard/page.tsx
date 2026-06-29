@@ -54,13 +54,13 @@ export default async function DashboardPage() {
       prisma.shift.count({ where: { orgId } }),
       prisma.orgMember.count({ where: { orgId } }),
       prisma.shiftAssignee.count({ where: { shift: { orgId } } }),
-      prisma.shiftCompletion.count({ where: { shift: { orgId } } }),
+      prisma.shiftCompletion.count({ where: { shift: { orgId }, revertedAt: null } }),
       prisma.shift.count({ where: { orgId, startsAt: { gte: todayStart, lte: todayEnd } } }),
       prisma.shift.findMany({
         where: { orgId, startsAt: { gte: startOfToday } },
         include: {
           assignees: { include: { member: { include: { user: true } } } },
-          completions: { select: { id: true } },
+          completions: { where: { revertedAt: null }, select: { id: true } },
         },
         orderBy: { startsAt: 'asc' },
         take: 6,
@@ -82,7 +82,7 @@ export default async function DashboardPage() {
         select: { memberId: true },
       }),
       prisma.shiftCompletion.findMany({
-        where: { shift: { orgId } },
+        where: { shift: { orgId }, revertedAt: null },
         include: {
           shift: { select: { id: true, title: true } },
           completedBy: { include: { user: true } },
@@ -303,7 +303,7 @@ export default async function DashboardPage() {
   // ── Member branch ─────────────────────────────────────────────────────────
   const [myAssigned, myCompletions] = await Promise.all([
     prisma.shiftAssignee.count({ where: { memberId: membership.id } }),
-    prisma.shiftCompletion.count({ where: { completedById: membership.id } }),
+    prisma.shiftCompletion.count({ where: { completedById: membership.id, revertedAt: null } }),
   ])
   const rate = myAssigned > 0 ? Math.round((myCompletions / myAssigned) * 100) : 0
   const memberStats: { label: string; value: string | number; icon: LucideIcon }[] = [
@@ -319,7 +319,7 @@ export default async function DashboardPage() {
         shift: {
           orgId,
           startsAt: { gt: now },
-          completions: { none: { completedById: membership.id } },
+          completions: { none: { completedById: membership.id, revertedAt: null } },
         },
       },
       include: { shift: true },
@@ -327,7 +327,7 @@ export default async function DashboardPage() {
       take: 5,
     }),
     prisma.shiftCompletion.findMany({
-      where: { shift: { orgId } },
+      where: { shift: { orgId }, revertedAt: null },
       include: {
         shift: { select: { id: true, title: true } },
         completedBy: { include: { user: true } },

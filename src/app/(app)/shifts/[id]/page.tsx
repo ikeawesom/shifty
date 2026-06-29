@@ -54,6 +54,9 @@ export default async function ShiftDetailPage({ params }: { params: Params }) {
   const isAdmin = membership.role === OrgRole.ADMIN
   const { nameMode } = membership.org
 
+  const isAssigned = shift.assignees.some((a) => a.memberId === membership.id)
+  const canMarkComplete = isAdmin || isAssigned
+
   const alreadyCompleted = shift.completions.some(
     (c) => c.completedById === membership.id && c.revertedAt === null,
   )
@@ -119,10 +122,12 @@ export default async function ShiftDetailPage({ params }: { params: Params }) {
         </section>
       )}
 
-      {alreadyCompleted ? (
-        <p className="text-sm text-muted-foreground">You have already marked this shift complete.</p>
-      ) : (
-        <MarkCompleteButton shiftId={shift.id} />
+      {canMarkComplete && (
+        alreadyCompleted ? (
+          <p className="text-sm text-muted-foreground">You have already marked this shift complete.</p>
+        ) : (
+          <MarkCompleteButton shiftId={shift.id} />
+        )
       )}
 
       <section className="flex flex-col gap-2">

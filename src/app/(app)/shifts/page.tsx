@@ -20,10 +20,34 @@ function formatTime(d: Date) {
   return d.toLocaleTimeString(undefined, { timeStyle: 'short' })
 }
 
-function getShiftStatus(shift: { startsAt: Date; endsAt: Date | null }, now: Date) {
-  if (now < shift.startsAt) return 'upcoming'
-  if (!shift.endsAt || now <= shift.endsAt) return 'active'
-  return 'completed'
+function getShiftTags(
+  shift: {
+    startsAt: Date
+    endsAt: Date | null
+    completions: { id: string }[]
+    assignees: { id: string }[]
+  },
+  now: Date,
+) {
+  const completedCount = shift.completions.length
+  const assigneeCount = shift.assignees.length
+  const fullyCompleted = assigneeCount > 0 ? completedCount >= assigneeCount : completedCount > 0
+
+  const tags: { label: string; className: string }[] = []
+
+  if (now < shift.startsAt) {
+    tags.push({ label: 'Upcoming', className: 'bg-muted text-muted-foreground' })
+  } else if (!shift.endsAt || now <= shift.endsAt) {
+    tags.push({ label: 'In Progress', className: 'bg-primary/10 text-primary' })
+  } else if (!fullyCompleted) {
+    tags.push({ label: 'Overdue', className: 'bg-red-50 text-red-700' })
+  }
+
+  if (fullyCompleted) {
+    tags.push({ label: 'Completed', className: 'bg-green-50 text-green-700' })
+  }
+
+  return tags
 }
 
 export default async function ShiftsPage() {
@@ -41,7 +65,7 @@ export default async function ShiftsPage() {
       assignees: {
         include: { member: { include: { user: true } } },
       },
-      completions: { select: { id: true } },
+      completions: { where: { revertedAt: null }, select: { id: true } },
     },
     orderBy: { startsAt: 'asc' },
   })
@@ -70,7 +94,7 @@ export default async function ShiftsPage() {
         <ul className="flex flex-col gap-3">
           {shifts.map((shift) => {
             const recurrenceLabel = RECURRENCE_LABEL[shift.recurrence]
-            const status = getShiftStatus(shift, now)
+            const tags = getShiftTags(shift, now)
             return (
               <li key={shift.id}>
                 <Link
@@ -88,21 +112,19 @@ export default async function ShiftsPage() {
                           {recurrenceLabel}
                         </span>
                       )}
-                      <span
-                        className={[
-                          'text-xs px-2 py-0.5 rounded-full font-medium ml-auto',
-                          status === 'active'
-                            ? 'bg-primary/10 text-primary'
-                            : status === 'completed'
-                            ? 'bg-green-50 text-green-700'
-                            : 'bg-muted text-muted-foreground',
-                        ].join(' ')}
-                      >
-                        {status === 'active' ? 'In Progress' : status === 'completed' ? 'Completed' : 'Upcoming'}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {shift.completions.length}/{shift.assignees.length} done
-                      </span>
+                      <div className="ml-auto flex items-center gap-1.5 flex-wrap justify-end">
+                        {tags.map((tag) => (
+                          <span
+                            key={tag.label}
+                            className={`text-xs px-2 py-0.5 rounded-full font-medium ${tag.className}`}
+                          >
+                            {tag.label}
+                          </span>
+                        ))}
+                        <span className="text-xs text-muted-foreground">
+                          {shift.completions.length}/{shift.assignees.length} done
+                        </span>
+                      </div>
                     </div>
 
                     <p className="text-xs text-muted-foreground">

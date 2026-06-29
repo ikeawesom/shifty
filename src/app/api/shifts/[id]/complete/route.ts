@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { syncUser } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { OrgRole } from '@prisma/client'
 
 type Params = Promise<{ id: string }>
 
@@ -17,8 +18,15 @@ export async function POST(req: NextRequest, { params }: { params: Params }) {
 
   if (!membership) return Response.json({ error: 'Forbidden' }, { status: 403 })
 
+  if (membership.role !== OrgRole.ADMIN) {
+    const assigned = await prisma.shiftAssignee.findFirst({
+      where: { shiftId: id, memberId: membership.id },
+    })
+    if (!assigned) return Response.json({ error: 'Not assigned to this shift' }, { status: 403 })
+  }
+
   const existing = await prisma.shiftCompletion.findFirst({
-    where: { shiftId: id, completedById: membership.id },
+    where: { shiftId: id, completedById: membership.id, revertedAt: null },
   })
 
   if (existing) return Response.json({ error: 'Already completed' }, { status: 409 })
