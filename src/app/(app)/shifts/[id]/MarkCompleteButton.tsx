@@ -7,11 +7,18 @@ export default function MarkCompleteButton({ shiftId }: { shiftId: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [remarks, setRemarks] = useState('')
 
   async function handleClick() {
     setLoading(true)
     setError(null)
-    const res = await fetch(`/api/shifts/${shiftId}/complete`, { method: 'POST' })
+    const body: { notes?: string } = {}
+    if (remarks.trim()) body.notes = remarks.trim()
+    const res = await fetch(`/api/shifts/${shiftId}/complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
     setLoading(false)
     if (res.ok) {
       router.refresh()
@@ -22,7 +29,15 @@ export default function MarkCompleteButton({ shiftId }: { shiftId: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-2">
+      <textarea
+        value={remarks}
+        onChange={(e) => setRemarks(e.target.value)}
+        placeholder="Add remarks (optional)"
+        rows={2}
+        disabled={loading}
+        className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+      />
       <button
         onClick={handleClick}
         disabled={loading}

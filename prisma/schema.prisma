@@ -112,10 +112,11 @@ model OrgMember {
   showEmail   Boolean  @default(true)
   joinedAt    DateTime @default(now())
 
-  user            User             @relation(fields: [userId], references: [id])
-  org             Organization     @relation(fields: [orgId], references: [id])
+  user             User              @relation(fields: [userId], references: [id])
+  org              Organization      @relation(fields: [orgId], references: [id])
   shiftAssignments ShiftAssignee[]
-  completions     ShiftCompletion[]
+  completions      ShiftCompletion[] @relation("CompletedBy")
+  reverts          ShiftCompletion[] @relation("RevertedBy")
 
   @@unique([userId, orgId])
 }
@@ -155,9 +156,12 @@ model ShiftCompletion {
   completedById String
   completedAt   DateTime  @default(now())
   notes         String?
+  revertedAt    DateTime?
+  revertedById  String?
 
-  shift       Shift     @relation(fields: [shiftId], references: [id])
-  completedBy OrgMember @relation(fields: [completedById], references: [id])
+  shift       Shift      @relation(fields: [shiftId], references: [id])
+  completedBy OrgMember  @relation("CompletedBy", fields: [completedById], references: [id])
+  revertedBy  OrgMember? @relation("RevertedBy",  fields: [revertedById],  references: [id])
 }
 
 model Invitation {

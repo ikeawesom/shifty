@@ -1,9 +1,11 @@
 import { syncUser } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { redirect } from 'next/navigation'
-import { Recurrence } from '@prisma/client'
+import { OrgRole, Recurrence } from '@prisma/client'
 import Link from 'next/link'
 import MarkCompleteButton from './MarkCompleteButton'
+import ShiftEditForm from './ShiftEditForm'
+import CompletionCard from './CompletionCard'
 import { getActiveOrg } from '@/lib/org'
 
 type Params = Promise<{ id: string }>
@@ -38,7 +40,10 @@ export default async function ShiftDetailPage({ params }: { params: Params }) {
         include: { member: { include: { user: true } } },
       },
       completions: {
-        include: { completedBy: { include: { user: true } } },
+        include: {
+          completedBy: { include: { user: true } },
+          revertedBy: { include: { user: true } },
+        },
         orderBy: { completedAt: 'desc' },
       },
     },
@@ -46,11 +51,20 @@ export default async function ShiftDetailPage({ params }: { params: Params }) {
 
   if (!shift || shift.orgId !== membership.orgId) redirect('/shifts')
 
+  const isAdmin = membership.role === OrgRole.ADMIN
+
   const alreadyCompleted = shift.completions.some(
-    (c) => c.completedById === membership.id,
+    (c) => c.completedById === membership.id && c.revertedAt === null,
   )
 
   const recurrenceLabel = RECURRENCE_LABEL[shift.recurrence]
+
+  const orgMembers = isAdmin
+    ? await prisma.orgMember.findMany({
+        where: { orgId: membership.orgId },
+        include: { user: true },
+      })
+    : []
 
   return (
     <main className="flex flex-col flex-1 gap-6 p-8 max-w-2xl">
@@ -73,6 +87,24 @@ export default async function ShiftDetailPage({ params }: { params: Params }) {
         </p>
         {shift.description && <p className="text-sm mt-1">{shift.description}</p>}
       </div>
+
+      {isAdmin && (
+        <ShiftEditForm
+          shift={{
+            id: shift.id,
+            title: shift.title,
+            description: shift.description,
+            startsAt: shift.startsAt,
+            endsAt: shift.endsAt,
+            recurrence: shift.recurrence,
+            assignees: shift.assignees.map((a) => ({ memberId: a.memberId })),
+          }}
+          orgMembers={orgMembers.map((m) => ({
+            id: m.id,
+            user: { name: m.user.name, email: m.user.email },
+          }))}
+        />
+      )}
 
       {shift.assignees.length > 0 && (
         <section className="flex flex-col gap-2">
@@ -98,15 +130,21 @@ export default async function ShiftDetailPage({ params }: { params: Params }) {
         ) : (
           <ul className="divide-y border rounded-lg">
             {shift.completions.map((c) => (
-              <li key={c.id} className="px-4 py-3 flex flex-col gap-0.5">
-                <span className="text-sm font-medium">
-                  {c.completedBy.user.name ?? c.completedBy.user.email}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {formatDate(c.completedAt)} {formatTime(c.completedAt)}
-                </span>
-                {c.notes && <span className="text-xs mt-1">{c.notes}</span>}
-              </li>
+              <CompletionCard
+                key={c.id}
+                completion={{
+                  id: c.id,
+                  completedBy: { user: { name: c.completedBy.user.name, email: c.completedBy.user.email } },
+                  completedAt: c.completedAt,
+                  notes: c.notes,
+                  revertedAt: c.revertedAt,
+                  revertedBy: c.revertedBy
+                    ? { user: { name: c.revertedBy.user.name, email: c.revertedBy.user.email } }
+                    : null,
+                }}
+                isAdmin={isAdmin}
+                shiftId={shift.id}
+              />
             ))}
           </ul>
         )}
