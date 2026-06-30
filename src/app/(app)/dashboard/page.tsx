@@ -147,7 +147,7 @@ export default async function DashboardPage() {
           {/* Bento grid */}
           <div className="grid grid-cols-12 gap-6">
             {/* Shifts Overview — col-span-8 */}
-            <div className="col-span-12 lg:col-span-8 bg-white border border-border rounded-2xl p-6 shadow-sm">
+            <div className="col-span-12 lg:col-span-8 bg-white border border-border rounded-2xl p-6 shadow-sm flex flex-col">
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <h3 className="text-base font-semibold">Shifts Overview</h3>
@@ -161,7 +161,7 @@ export default async function DashboardPage() {
               </div>
 
               {orgShifts.length === 0 ? (
-                <div className="border border-dashed border-border rounded-xl p-8 text-center">
+                <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-border rounded-xl">
                   <CalendarDays className="size-8 text-muted-foreground/40 mx-auto mb-3" />
                   <p className="text-sm font-medium text-muted-foreground">No shifts created yet.</p>
                   <Link href="/shifts/new" className="text-sm text-primary hover:underline mt-1 inline-block">
