@@ -14,8 +14,26 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Shifty',
-  description: 'Shift and task delegation management for teams.',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'),
+  title: {
+    default: 'Shifty',
+    template: '%s | Shifty',
+  },
+  description:
+    'Assign shifts, track completions, and automate reminders — all in one place for team leaders.',
+  openGraph: {
+    type: 'website',
+    siteName: 'Shifty',
+    title: 'Shifty — Shift & Task Delegation for Teams',
+    description:
+      'Assign shifts, track completions, and automate reminders — all in one place for team leaders.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Shifty — Shift & Task Delegation for Teams',
+    description:
+      'Assign shifts, track completions, and automate reminders — all in one place for team leaders.',
+  },
 }
 
 export default function RootLayout({

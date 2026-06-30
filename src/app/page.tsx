@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { getUser } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { LoginLink, RegisterLink } from '@kinde-oss/kinde-auth-nextjs/components'
@@ -13,6 +14,18 @@ import {
   Sparkles,
   ArrowRight,
 } from 'lucide-react'
+
+export const metadata: Metadata = {
+  title: { absolute: 'Shifty — Shift & Task Delegation for Teams' },
+  description:
+    'Shifty helps team leaders assign shifts, track who completed what, and keep everyone in sync with smart reminders.',
+  openGraph: {
+    url: '/',
+    title: 'Shifty — Shift & Task Delegation for Teams',
+    description:
+      'Shifty helps team leaders assign shifts, track who completed what, and keep everyone in sync with smart reminders.',
+  },
+}
 
 const PRICING_TIERS = [
   {
