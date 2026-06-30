@@ -15,7 +15,6 @@ export async function GET(req: NextRequest) {
   }
 
   const now = new Date()
-  const currentHourUtc = now.getUTCHours()
 
   const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
   const tomorrowStart = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000)
@@ -34,7 +33,7 @@ export async function GET(req: NextRequest) {
 
   for (const org of orgs) {
     try {
-      const { reminderType, reminderHourUtc, reminderLeadMinutes, owner } = org
+      const { reminderType, owner } = org
 
       const allowed = PLAN_ALLOWED_REMINDER_TYPES[owner.plan]
       if (!allowed.includes(reminderType)) {
@@ -43,11 +42,8 @@ export async function GET(req: NextRequest) {
       }
 
       if (reminderType === ReminderType.ASSIGNEE_PRE_SHIFT) {
-        const windowStart = new Date(now.getTime() + reminderLeadMinutes * 60 * 1000)
-        const windowEnd = new Date(windowStart.getTime() + 60 * 60 * 1000)
-
         const shifts = await prisma.shift.findMany({
-          where: { orgId: org.id, startsAt: { gte: windowStart, lt: windowEnd } },
+          where: { orgId: org.id, startsAt: { gte: todayStart, lt: tomorrowStart } },
           include: { assignees: true },
         })
 
@@ -80,11 +76,6 @@ export async function GET(req: NextRequest) {
           }
         }
       } else {
-        if (currentHourUtc !== reminderHourUtc) {
-          skipped++
-          continue
-        }
-
         const todayShifts = await prisma.shift.findMany({
           where: { orgId: org.id, startsAt: { gte: todayStart, lt: tomorrowStart } },
           include: { assignees: { include: { member: true } } },
